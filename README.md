@@ -42,7 +42,7 @@ Compatibility Mods:
 
 ## Documentation
 
-Docs live in `docs/` and are built with Mintlify.
+Documentation is available at https://docs.elitemobs.frotty27.com/. The source is stored in `docs/` so changes can be versioned with the mod.
 
 ## Installation
 
