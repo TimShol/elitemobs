@@ -799,29 +799,7 @@ public final class EliteMobsAssetGenerator {
         }
     }
 
-    private static String buildSpawnMarkerJson(List<EliteMobsConfig.SummonMarkerEntry> entries) {
-        List<EliteMobsConfig.SummonMarkerEntry> sanitized = new ArrayList<>();
-        for (EliteMobsConfig.SummonMarkerEntry entry : entries) {
-            if (entry == null) continue;
-            EliteMobsConfig.SummonMarkerEntry copy = new EliteMobsConfig.SummonMarkerEntry();
-            String name = entry.Name == null ? "" : entry.Name.trim();
-            if (name.startsWith(EliteMobsConfig.SUMMON_ROLE_PREFIX)) {
-                name = name.substring(EliteMobsConfig.SUMMON_ROLE_PREFIX.length()).trim();
-            }
-            copy.Name = name;
-            copy.Weight = entry.Weight;
-            copy.Flock = entry.Flock;
-            copy.SpawnAfterGameTime = entry.SpawnAfterGameTime;
-            sanitized.add(copy);
-        }
-        Map<String, Object> marker = new LinkedHashMap<>();
-        marker.put("Model", "NPC_Spawn_Marker");
-        marker.put("NPCs", sanitized);
-        marker.put("ManualTrigger", true);
-        marker.put("ExclusionRadius", 0);
-        marker.put("MaxDropHeight", 4);
-        return GSON.toJson(marker);
-    }
+
 
     private static String readResourceText(String resourcePath) throws IOException {
         ClassLoader classLoader = EliteMobsAssetGenerator.class.getClassLoader();

@@ -17,6 +17,9 @@ public final class EliteMobsTierComponent implements Component<EntityStore> {
     public boolean scaledApplied;
     public float appliedScale;
 
+    public float distanceHealthBonus;
+    public float distanceDamageBonus;
+
     public boolean healthApplied;
     public float appliedHealthMult;
     public boolean healthFinalized;
@@ -61,6 +64,8 @@ public final class EliteMobsTierComponent implements Component<EntityStore> {
     private static final KeyedCodec<Integer> K_TIER = new KeyedCodec<>("TierIndex", new IntegerCodec());
     private static final KeyedCodec<Boolean> K_SCALED_APPLIED = new KeyedCodec<>("ScaledApplied", new BooleanCodec());
     private static final KeyedCodec<Float> K_APPLIED_SCALE = new KeyedCodec<>("AppliedScale", new FloatCodec());
+    private static final KeyedCodec<Float> K_DIST_HP_BONUS = new KeyedCodec<>("DistHpBonus", new FloatCodec());
+    private static final KeyedCodec<Float> K_DIST_DMG_BONUS = new KeyedCodec<>("DistDmgBonus", new FloatCodec());
 
     private static final KeyedCodec<Boolean> K_HEALTH_APPLIED = new KeyedCodec<>("HealthApplied", new BooleanCodec());
     private static final KeyedCodec<Float> K_APPLIED_HEALTH_MULT = new KeyedCodec<>("AppliedHealthMult",
@@ -121,6 +126,8 @@ public final class EliteMobsTierComponent implements Component<EntityStore> {
                                                                                                         (c, v) -> c.appliedScale = v,
                                                                                                         c -> c.appliedScale
             ).add()
+            .append(K_DIST_HP_BONUS, (c, v) -> c.distanceHealthBonus = v, c -> c.distanceHealthBonus).add()
+            .append(K_DIST_DMG_BONUS, (c, v) -> c.distanceDamageBonus = v, c -> c.distanceDamageBonus).add()
 
             .append(K_HEALTH_APPLIED, (c, v) -> c.healthApplied = v, c -> c.healthApplied).add().append(
                     K_APPLIED_HEALTH_MULT,
@@ -178,6 +185,8 @@ public final class EliteMobsTierComponent implements Component<EntityStore> {
 
         c.scaledApplied = this.scaledApplied;
         c.appliedScale = this.appliedScale;
+        c.distanceHealthBonus = this.distanceHealthBonus;
+        c.distanceDamageBonus = this.distanceDamageBonus;
 
         c.healthApplied = this.healthApplied;
         c.appliedHealthMult = this.appliedHealthMult;

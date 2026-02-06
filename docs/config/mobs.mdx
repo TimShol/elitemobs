@@ -1,0 +1,32 @@
+---
+title: Mobs Configuration
+description: Overriding specific NPC behaviors in mobs.yml.
+---
+
+`mobs.yml` allows you to define specific rules for individual NPC types (e.g., "Goblin Duke" vs "Goblin Miner").
+
+## Mob Rules
+
+A Mob Rule tells the system how to handle a specific Entity ID found in the world.
+
+```yaml
+Mobs:
+  rules:
+    Goblin_Miner:
+      # Is this mob allowed to be Elite?
+      enabledPerTier: [true, true, true, true, true]
+      
+      # Force it to only use pickaxes
+      weaponOverrideMode: ALWAYS
+      weaponIdMustContain: ["pickaxe"]
+      
+    Trork_Shaman:
+      # Force it to only use staffs
+      weaponOverrideMode: ALWAYS
+      weaponIdMustContain: ["staff"]
+```
+
+### Weapon Logic
+*   **ALWAYS:** Forces the mob to equip an item matching the criteria, replacing whatever it had.
+*   **ONLY_IF_EMPTY:** Only equips an item if the mob has empty hands.
+*   **NONE:** Never changes the mob's equipment (good for custom bosses or unarmed mobs).

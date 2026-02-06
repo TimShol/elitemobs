@@ -1,0 +1,15 @@
+---
+title: Compatibility
+description: Mod interoperability notes.
+---
+
+EliteMobs is designed to be compatible with standard Hytale modding practices.
+
+## RPG Leveling Mods
+EliteMobs includes internal logic to detect popular leveling mods. When detected, it may attempt to align its Tier system with the external Level system for nameplate consistency.
+
+## Custom Item Mods
+If you have a mod that adds new weapons (e.g., `SpartanWeaponry_Longsword_Iron`), you must manually add these IDs to `gear.yml` in the `weaponCatalog`. If you don't, Elites will never roll them.
+
+## World Generation Mods
+The `ENVIRONMENT` progression style relies on standard Hytale biome/zone tags. If a custom biome mod does not apply standard tags (e.g., `Zone1`), Elites may default to Tier 1 spawning rules. Use `progressionStyle: DISTANCE_FROM_SPAWN` for better compatibility with custom maps.

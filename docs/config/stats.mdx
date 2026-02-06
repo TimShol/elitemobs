@@ -1,0 +1,42 @@
+---
+title: Stats Configuration
+description: Tuning health and damage multipliers in stats.yml.
+---
+
+`stats.yml` controls the raw math behind Elite difficulty. This is where you adjust how "spongy" or "deadly" the mobs are.
+
+## Health Scaling
+
+Controls the maximum health of EliteMobs relative to their vanilla counterparts.
+
+```yaml
+Health:
+  enableHealthScaling: true
+  # Multipliers for Tier 1 to Tier 5
+  healthMultiplierPerTier:
+    - 0.1  # Tier 1 (1.1x total health)
+    - 0.5  # Tier 2 (1.5x total health)
+    - 1.1  # Tier 3 (2.1x total health)
+    - 1.8  # Tier 4 (2.8x total health)
+    - 2.6  # Tier 5 (3.6x total health)
+```
+
+## Damage Scaling
+
+Controls the physical damage output.
+
+```yaml
+Damage:
+  enableMobDamageMultiplier: true
+  # Damage multipliers for Tier 1 to Tier 5
+  mobDamageMultiplierPerTier:
+    - 0.6
+    - 1.1
+    - 1.6
+    - 2.1
+    - 2.6
+  # Randomness factor (+/- 5%) to make hits feel less static
+  mobDamageRandomVariance: 0.05
+```
+
+**Tip:** If you feel Tier 1 mobs are too weak, increase the first value in `healthMultiplierPerTier`. If Tier 5 mobs one-shot players, lower the last value in `mobDamageMultiplierPerTier`.

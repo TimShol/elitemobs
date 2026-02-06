@@ -181,22 +181,25 @@ public final class EliteMobsDamageDealtSystem extends DamageEventSystem {
 
         int clampedTierIndex = clampTierIndex(attackerTierComponent.tierIndex);
 
-        // Multiplier per tier (ConfigIO should guarantee sizing, but keep safe fallback)
-        float damageMultiplier = DEFAULT_DAMAGE_MULTIPLIER;
+        // Base Multiplier per tier
+        float baseMultiplier = DEFAULT_DAMAGE_MULTIPLIER;
         if (config.damage.mobDamageMultiplierPerTier != null && config.damage.mobDamageMultiplierPerTier.length >= TIERS_AMOUNT) {
-            damageMultiplier = config.damage.mobDamageMultiplierPerTier[clampedTierIndex];
+            baseMultiplier = config.damage.mobDamageMultiplierPerTier[clampedTierIndex];
         }
 
-        // Optional random variance
+        // Add Distance Bonus
+        float totalMultiplier = baseMultiplier + attackerTierComponent.distanceDamageBonus;
+
+        // Optional random variance (applied to the total multiplier)
         float damageRandomVariance = config.damage.mobDamageRandomVariance;
         if (damageRandomVariance > 0f) {
-            damageMultiplier += (random.nextFloat() * 2f - 1f) * damageRandomVariance;
+            totalMultiplier += (random.nextFloat() * 2f - 1f) * damageRandomVariance;
         }
 
-        if (damageMultiplier < 0f) damageMultiplier = 0f;
+        if (totalMultiplier < 0f) totalMultiplier = 0f;
 
         float damageBeforeScaling = damage.getAmount();
-        float damageAfterScaling = damageBeforeScaling * damageMultiplier;
+        float damageAfterScaling = damageBeforeScaling * totalMultiplier;
 
         damage.setAmount(damageAfterScaling);
         damageEventsScaledCount++;
@@ -206,10 +209,12 @@ public final class EliteMobsDamageDealtSystem extends DamageEventSystem {
 
             EliteMobsLogger.debug(
                     LOGGER,
-                    "APPLY tier=%d mult=%.3f dmg %.2f -> %.2f attackerRole=%s victimRole=%s",
+                    "APPLY tier=%d baseMult=%.2f distBonus=%.2f finalMult=%.3f dmg %.2f -> %.2f attackerRole=%s victimRole=%s",
                     EliteMobsLogLevel.INFO,
                     clampedTierIndex,
-                    damageMultiplier,
+                    baseMultiplier,
+                    attackerTierComponent.distanceDamageBonus,
+                    totalMultiplier,
                     damageBeforeScaling,
                     damageAfterScaling,
                     safeRoleName(attackerNpcEntity),

@@ -60,11 +60,11 @@ public final class EliteMobsEquipmentService {
     private boolean equipArmor(ItemContainer armorContainer, EliteMobsConfig config, int tierIndex) {
         if (armorContainer == null) return false;
 
-        if (config.catalogs.armorPiecesToEquipPerTier == null || config.catalogs.armorPiecesToEquipPerTier.length <= tierIndex) {
+        if (config.gear.armorPiecesToEquipPerTier == null || config.gear.armorPiecesToEquipPerTier.length <= tierIndex) {
             return false;
         }
 
-        int armorSlotsToFill = clampArmorSlots(config.catalogs.armorPiecesToEquipPerTier[tierIndex]);
+        int armorSlotsToFill = clampArmorSlots(config.gear.armorPiecesToEquipPerTier[tierIndex]);
         if (armorSlotsToFill == 0) return false;
 
         String wantedRarity = pickRarityForTier(config, tierIndex);
@@ -185,12 +185,12 @@ public final class EliteMobsEquipmentService {
 
     private ItemStack maybeEquipUtilityShield(Inventory inventory, EliteMobsConfig config, int tierIndex) {
         // If ConfigIO guarantees non-null + fixed size, you can drop this later.
-        if (config.catalogs.shieldUtilityChancePerTier == null || config.catalogs.shieldUtilityChancePerTier.length < TIERS_AMOUNT) {
+        if (config.gear.shieldUtilityChancePerTier == null || config.gear.shieldUtilityChancePerTier.length < TIERS_AMOUNT) {
             return null;
         }
 
         int clampedTierIndex = clampTierIndex(tierIndex);
-        double chance = clampDouble(config.catalogs.shieldUtilityChancePerTier[clampedTierIndex], 0.0, 1.0);
+        double chance = clampDouble(config.gear.shieldUtilityChancePerTier[clampedTierIndex], 0.0, 1.0);
         if (chance <= 0.0) return null;
 
         ItemContainer utilityContainer = inventory.getUtility();
@@ -250,9 +250,9 @@ public final class EliteMobsEquipmentService {
         if (lowercaseWeaponId.contains(SHIELD_TOKEN)) return false;
 
         // If ConfigIO guarantees non-null list, you can drop this null check later.
-        if (config.catalogs.twoHandedWeaponIds == null) return true;
+        if (config.gear.twoHandedWeaponIds == null) return true;
 
-        for (String twoHandedWeaponIdFragment : config.catalogs.twoHandedWeaponIds) {
+        for (String twoHandedWeaponIdFragment : config.gear.twoHandedWeaponIds) {
             if (twoHandedWeaponIdFragment == null || twoHandedWeaponIdFragment.isBlank()) continue;
             if (lowercaseWeaponId.contains(twoHandedWeaponIdFragment.toLowerCase(Locale.ROOT))) return false;
         }
@@ -267,12 +267,12 @@ public final class EliteMobsEquipmentService {
 
     private String pickShieldForTier(EliteMobsConfig config, int tierIndex) {
         // If ConfigIO guarantees non-null weaponCatalog list, drop null checks later.
-        if (config.catalogs.weaponCatalog == null || config.catalogs.weaponCatalog.isEmpty()) return null;
+        if (config.gear.weaponCatalog == null || config.gear.weaponCatalog.isEmpty()) return null;
 
         String wantedRarity = pickRarityForTier(config, tierIndex);
 
         ArrayList<String> shieldCandidates = new ArrayList<>();
-        for (String itemId : config.catalogs.weaponCatalog) {
+        for (String itemId : config.gear.weaponCatalog) {
             if (itemId == null || itemId.isBlank()) continue;
             if (Item.getAssetMap().getAsset(itemId) == null) continue;
 
@@ -285,7 +285,7 @@ public final class EliteMobsEquipmentService {
         }
 
         if (shieldCandidates.isEmpty()) {
-            for (String itemId : config.catalogs.weaponCatalog) {
+            for (String itemId : config.gear.weaponCatalog) {
                 if (itemId == null || itemId.isBlank()) continue;
                 if (Item.getAssetMap().getAsset(itemId) == null) continue;
                 if (itemId.toLowerCase(Locale.ROOT).contains(SHIELD_TOKEN)) shieldCandidates.add(itemId);
@@ -297,7 +297,7 @@ public final class EliteMobsEquipmentService {
     }
 
     private String pickWeaponForRuleAndTier(EliteMobsConfig config, EliteMobsConfig.MobRule mobRule, int tierIndex) {
-        if (config.catalogs.weaponCatalog == null || config.catalogs.weaponCatalog.isEmpty()) return null;
+        if (config.gear.weaponCatalog == null || config.gear.weaponCatalog.isEmpty()) return null;
 
         String wantedRarity = pickRarityForTier(config, tierIndex);
 
@@ -310,7 +310,7 @@ public final class EliteMobsEquipmentService {
         ArrayList<String> weaponCandidates = new ArrayList<>();
 
         // 1) wanted rarity + filters
-        for (String itemId : config.catalogs.weaponCatalog) {
+        for (String itemId : config.gear.weaponCatalog) {
             if (itemId == null || itemId.isBlank()) continue;
             if (Item.getAssetMap().getAsset(itemId) == null) continue;
             if (isShieldItemId(itemId)) continue;
@@ -321,7 +321,7 @@ public final class EliteMobsEquipmentService {
         // 2) allowed rarities + filters
         if (weaponCandidates.isEmpty()) {
             for (String allowedRarity : allowedRaritiesForTier(config, tierIndex)) {
-                for (String itemId : config.catalogs.weaponCatalog) {
+                for (String itemId : config.gear.weaponCatalog) {
                     if (itemId == null || itemId.isBlank()) continue;
                     if (Item.getAssetMap().getAsset(itemId) == null) continue;
                     if (isShieldItemId(itemId)) continue;
@@ -338,7 +338,7 @@ public final class EliteMobsEquipmentService {
 
         // 3) any rarity + filters
         if (weaponCandidates.isEmpty()) {
-            for (String itemId : config.catalogs.weaponCatalog) {
+            for (String itemId : config.gear.weaponCatalog) {
                 if (itemId == null || itemId.isBlank()) continue;
                 if (Item.getAssetMap().getAsset(itemId) == null) continue;
                 if (isShieldItemId(itemId)) continue;
@@ -391,15 +391,15 @@ public final class EliteMobsEquipmentService {
     }
 
     private String pickRarityForTier(EliteMobsConfig config, int tierIndex) {
-        if (config.catalogs.tierEquipmentRarityWeights == null || config.catalogs.tierEquipmentRarityWeights.isEmpty()) {
+        if (config.gear.tierEquipmentRarityWeights == null || config.gear.tierEquipmentRarityWeights.isEmpty()) {
             return DEFAULT_RARITY;
         }
 
-        if (tierIndex < 0 || tierIndex >= config.catalogs.tierEquipmentRarityWeights.size()) {
+        if (tierIndex < 0 || tierIndex >= config.gear.tierEquipmentRarityWeights.size()) {
             return DEFAULT_RARITY;
         }
 
-        Map<String, Double> weights = config.catalogs.tierEquipmentRarityWeights.get(tierIndex);
+        Map<String, Double> weights = config.gear.tierEquipmentRarityWeights.get(tierIndex);
         if (weights == null || weights.isEmpty()) return DEFAULT_RARITY;
 
         double totalWeight = 0.0;
@@ -417,21 +417,21 @@ public final class EliteMobsEquipmentService {
 
 
     private List<String> allowedRaritiesForTier(EliteMobsConfig config, int tierIndex) {
-        if (config.catalogs.tierAllowedRarities == null) return List.of(DEFAULT_RARITY);
-        if (tierIndex < 0 || tierIndex >= config.catalogs.tierAllowedRarities.size()) {
+        if (config.gear.tierAllowedRarities == null) return List.of(DEFAULT_RARITY);
+        if (tierIndex < 0 || tierIndex >= config.gear.tierAllowedRarities.size()) {
             return List.of(DEFAULT_RARITY);
         }
 
-        List<String> rarities = config.catalogs.tierAllowedRarities.get(tierIndex);
+        List<String> rarities = config.gear.tierAllowedRarities.get(tierIndex);
         return (rarities == null || rarities.isEmpty()) ? List.of(DEFAULT_RARITY) : rarities;
     }
 
 
     private List<String> pickArmorMaterialsOfRarity(EliteMobsConfig config, String wantedRarity) {
-        if (config.catalogs.armorMaterials == null || config.catalogs.armorMaterials.isEmpty()) return List.of();
+        if (config.gear.armorMaterials == null || config.gear.armorMaterials.isEmpty()) return List.of();
 
         ArrayList<String> materials = new ArrayList<>();
-        for (String material : config.catalogs.armorMaterials) {
+        for (String material : config.gear.armorMaterials) {
             if (material == null || material.isBlank()) continue;
             if (wantedRarity.equals(classifyArmorRarity(config, material))) materials.add(material);
         }
@@ -440,11 +440,11 @@ public final class EliteMobsEquipmentService {
     }
 
     private String classifyArmorRarity(EliteMobsConfig config, String armorMaterial) {
-        if (config.catalogs.armorRarityRulesContains == null || config.catalogs.armorRarityRulesContains.isEmpty()) return DEFAULT_RARITY;
+        if (config.gear.armorRarityRulesContains == null || config.gear.armorRarityRulesContains.isEmpty()) return DEFAULT_RARITY;
 
         String lowercaseMaterial = armorMaterial.toLowerCase(Locale.ROOT);
 
-        for (Map.Entry<String, String> entry : config.catalogs.armorRarityRulesContains.entrySet()) {
+        for (Map.Entry<String, String> entry : config.gear.armorRarityRulesContains.entrySet()) {
             String matchFragment = entry.getKey();
             if (matchFragment == null || matchFragment.isBlank()) continue;
 
@@ -458,11 +458,11 @@ public final class EliteMobsEquipmentService {
     }
 
     private String classifyWeaponRarity(EliteMobsConfig config, String itemId) {
-        if (config.catalogs.weaponRarityRulesContains == null || config.catalogs.weaponRarityRulesContains.isEmpty()) return DEFAULT_RARITY;
+        if (config.gear.weaponRarityRulesContains == null || config.gear.weaponRarityRulesContains.isEmpty()) return DEFAULT_RARITY;
 
         String lowercaseItemId = itemId.toLowerCase(Locale.ROOT);
 
-        for (Map.Entry<String, String> entry : config.catalogs.weaponRarityRulesContains.entrySet()) {
+        for (Map.Entry<String, String> entry : config.gear.weaponRarityRulesContains.entrySet()) {
             String matchFragment = entry.getKey();
             if (matchFragment == null || matchFragment.isBlank()) continue;
 

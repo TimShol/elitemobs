@@ -1,0 +1,30 @@
+---
+title: FAQ
+description: Frequently asked questions and troubleshooting.
+---
+
+## Troubleshooting
+
+### Why aren't elites spawning?
+1.  Check `core.yml` -> `globalSpawnChance` (default is 0.15 or 15%).
+2.  If using `ENVIRONMENT` progression, ensure you are in a supported zone (Zone 1-4).
+3.  Check server logs for parsing errors on startup.
+
+### Why are mobs one-shotting me?
+Check `stats.yml` -> `mobDamageMultiplierPerTier`. The default scaling for Tier 5 is quite high (2.6x). If you have mods that increase vanilla armor values, this is fine, but for vanilla Hytale, you might want to lower it to 2.0x.
+
+### How do I remove the mod safely?
+1.  Run `/npc clean --confirm` to remove existing Elite entities.
+2.  Stop the server.
+3.  Remove the JAR file.
+4.  Restart.
+
+*Note: If you skip step 1, you may have "ghost" entities with broken AI or rendering issues until they are naturally killed.*
+
+## Configuration
+
+### Can I make elites spawn everywhere?
+Yes. Set `progressionStyle: NONE` in `core.yml`. This randomizes tiers regardless of location.
+
+### How do I disable the particles?
+Particle effects are tied to the status effects in `effects.yml`. You can disable `EFFECT_PROJECTILE_RESISTANCE` if it's visually noisy.

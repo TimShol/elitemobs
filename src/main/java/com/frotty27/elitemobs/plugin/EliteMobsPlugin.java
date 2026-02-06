@@ -168,7 +168,7 @@ public final class EliteMobsPlugin extends JavaPlugin {
         Path modDirectory = getModDirectory();
         
         // 1. Read existing file version for migration
-        String oldVersion = YamlSerializer.readConfigVersion(modDirectory, "main.yml", "configVersion");
+        String oldVersion = YamlSerializer.readConfigVersion(modDirectory, "core.yml", "configVersion");
 
         // 2. Prepare defaults with current mod version
         EliteMobsConfig defaults = new EliteMobsConfig();

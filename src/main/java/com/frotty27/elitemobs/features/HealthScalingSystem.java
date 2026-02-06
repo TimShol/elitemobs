@@ -71,10 +71,13 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
                         && !tierComponent.healthFinalized
                         && tierComponent.healthFinalizeTries < maxFinalizeTries;
 
+        // Calculate total expected multiplier
+        float totalMultiplier = tierComponent.appliedHealthMult + tierComponent.distanceHealthBonus;
+
         float expectedMax =
                 tierComponent.expectedHealthMax > 0.0001f
                         ? tierComponent.expectedHealthMax
-                        : (tierComponent.baseHealthMax > 0.0001f ? (tierComponent.baseHealthMax * tierComponent.appliedHealthMult) : -1f);
+                        : (tierComponent.baseHealthMax > 0.0001f ? (tierComponent.baseHealthMax * totalMultiplier) : -1f);
 
         float actualMax = healthStatValue.getMax();
         boolean changed = false;
@@ -88,7 +91,7 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
                     commandBuffer,
                     entityStats,
                     healthStatId,
-                    tierComponent.appliedHealthMult,
+                    totalMultiplier,
                     allowTopOff
             );
 
@@ -134,7 +137,7 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
             CommandBuffer<EntityStore> commandBuffer,
             EntityStatMap entityStats,
             int healthStatId,
-            float healthMultiplier,
+            float totalMultiplier,
             boolean allowTopOff
     ) {
         var before = entityStats.get(healthStatId);
@@ -150,7 +153,7 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
                 new StaticModifier(
                         Modifier.ModifierTarget.MAX,
                         StaticModifier.CalculationType.MULTIPLICATIVE,
-                        Math.max(0.01f, healthMultiplier)
+                        Math.max(0.01f, totalMultiplier)
                 )
         );
 

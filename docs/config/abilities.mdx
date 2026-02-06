@@ -1,0 +1,46 @@
+---
+title: Abilities Configuration
+description: Configuring special combat abilities in abilities.yml.
+---
+
+Abilities make Elites dangerous. `abilities.yml` defines what abilities exist, who can use them, and how powerful they are per tier.
+
+## Ability Structure
+
+Each ability (Charge Leap, Heal, Summon) has common fields:
+
+*   `isEnabled`: Global toggle.
+*   `chancePerTier`: Probability an Elite of this tier gets the ability.
+*   `cooldownSecondsPerTier`: How often it can be used.
+*   `gate`: Restrictions on who can use it (e.g., "Must hold a sword", "Cannot be a Void Eye").
+
+## Charge Leap
+
+Propels the mob toward the player to close distance.
+
+```yaml
+charge_leap:
+  slamBaseDamagePerTier: [0, 0, 0, 20, 30] # Damage on impact
+  applyForcePerTier: [0, 0, 0, 530, 530]   # Velocity force
+```
+
+## Heal Potion
+
+Allows the mob to drink a potion when low on health.
+
+```yaml
+heal_potion:
+  minHealthTriggerPercent: 0.50 # Triggers below 50% HP
+  instantHealChance: 1.0        # vs Regeneration
+  npcDrinkDurationSeconds: 3.0  # Time to interrupt
+```
+
+## Undead Summon
+
+Summons reinforcements (usually Skeleton Archers) during combat.
+
+```yaml
+undead_summon:
+  maxAlive: 7                   # Max minions at once
+  skeletonArcherWeight: 100     # Summon pool weight
+```

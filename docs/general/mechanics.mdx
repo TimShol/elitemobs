@@ -1,0 +1,54 @@
+---
+title: Mechanics
+description: Understanding the core systems of EliteMobs.
+---
+
+## The Tier System
+
+EliteMobs classifies enemies into 5 tiers of power. These tiers determine an entity's health, damage output, equipment quality, and ability access.
+
+| Tier | Name | Color Indicator | Challenge Level |
+| :--- | :--- | :--- | :--- |
+| **1** | Common | `[•]` | Baseline challenge, slightly stronger than vanilla. |
+| **2** | Uncommon | `[• •]` | Noticeable threat, often has basic abilities. |
+| **3** | Rare | `[• • •]` | dangerous, requires decent gear. |
+| **4** | Epic | `[• • • •]` | Mini-boss difficulty, high chance of ability use. |
+| **5** | Legendary | `[• • • • •]` | Boss-level threat, best loot, maximum size. |
+
+## Progression Styles
+
+The mod decides *where* high-tier mobs spawn based on the `progressionStyle` setting in `core.yml`.
+
+### 1. Environment (Default)
+Tiers are tied to Hytale's zone difficulty.
+*   **Zone 1 (Green):** Mostly T1/T2.
+*   **Zone 2 (Yellow):** Mix of T2/T3.
+*   **Zone 3 (Red):** Heavy on T3/T4.
+*   **Zone 4 (Devastated):** Dangerous T4/T5 spawns.
+
+### 2. Distance from Spawn
+Difficulty scales linearly as you travel further from coordinates `(0,0)`.
+*   **Near Spawn:** Safe, mostly vanilla or T1.
+*   **Deep Wilderness:** Tiers gradually increase every ~1000 blocks (configurable).
+*   **Bonus Stats:** Mobs gain small health/damage bonuses every ~100 blocks between tier jumps, creating a smooth difficulty curve.
+
+### 3. None (Random)
+A truly chaotic mode where any tier can spawn anywhere based on global weights. Good for hardcore survival servers.
+
+## Combat Mechanics
+
+### Abilities
+Elites aren't just stat sponges. Depending on their tier and type, they can:
+*   **Leap:** Close the distance instantly with a physics-based slam.
+*   **Heal:** Drink potions during combat if not interrupted.
+*   **Summon:** Call reinforcements (e.g., Skeleton Archers) to overwhelm players.
+
+### Scaling
+*   **Health:** Multiplied per tier (e.g., Tier 5 might have 2.6x base health).
+*   **Damage:** Multiplied per tier (e.g., Tier 5 deals 2.6x damage).
+*   **Size:** Higher tiers are physically larger (up to +18% scale).
+
+## Loot System
+Elites drop vanilla loot with multipliers (e.g., 4x drops) and have a chance to drop their equipped gear.
+*   **Equipment:** Weapons and armor roll with rarities (Common to Legendary) matching the mob's tier.
+*   **Custom Drops:** You can configure rare items (essences, gems) to drop only from specific tiers.

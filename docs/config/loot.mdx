@@ -1,0 +1,47 @@
+---
+title: Loot Configuration
+description: Configuring drops and rewards in loot.yml.
+---
+
+`loot.yml` (formerly `drops.yml`) controls the rewards players receive for defeating Elites.
+
+## Equipment Drop Chances
+
+These settings control how likely an Elite is to drop the actual gear it is wearing.
+
+```yaml
+Loot:
+  dropWeaponChance: 0.05       # 5% chance
+  dropArmorPieceChance: 0.05   # 5% chance per piece
+  dropOffhandItemChance: 0.05  # 5% chance (shield/torch)
+```
+
+## Vanilla Multipliers
+
+Multiplies the standard loot table (bones, flesh, etc.) by the mob's tier.
+
+```yaml
+Loot:
+  # Multiplier per tier (Tier 1 to Tier 5)
+  vanillaDroplistMultiplierPerTier:
+    - 0  # Tier 1 (Vanilla amount)
+    - 0  # Tier 2
+    - 2  # Tier 3 (2x drops)
+    - 4  # Tier 4 (4x drops)
+    - 6  # Tier 5 (6x drops)
+```
+
+## Extra Drops
+
+Custom drop tables for specific tiers. You can add rare materials, potions, or currency items here.
+
+```yaml
+Loot:
+  extraDrops:
+    - itemId: "Potion_Health_Greater"
+      chance: 0.12        # 12% drop chance
+      minTier: 4          # Only drops from Tier 4+
+      maxTier: 4
+      minAmount: 1
+      maxAmount: 2
+```

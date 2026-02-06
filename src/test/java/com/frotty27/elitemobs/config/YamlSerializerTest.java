@@ -16,7 +16,7 @@ public class YamlSerializerTest {
 
     @Test
     void fixedArraySizePadsAndTruncatesAndClampsNumbers(@TempDir Path tempDir) throws IOException {
-        Path mainYaml = tempDir.resolve("main.yml");
+        Path mainYaml = tempDir.resolve("core.yml");
         Path visualsYaml = tempDir.resolve("visuals.yml");
 
         String mainText = """

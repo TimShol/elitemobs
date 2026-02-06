@@ -1,0 +1,52 @@
+---
+title: Visuals Configuration
+description: Customizing nameplates and model scaling in visuals.yml.
+---
+
+`visuals.yml` controls the aesthetic presentation of EliteMobs.
+
+## Nameplates
+
+Nameplates help players identify the threat level of an enemy from a distance.
+
+```yaml
+Nameplates:
+  nameplatesEnabled: true
+  nameplateMode: RANKED_ROLE  # Shows "[• •] Rotting Zombie"
+  
+  # Visual indicators for Tiers 1-5
+  nameplatePrefixPerTier:
+    - "[•]"
+    - "[• •]"
+    - "[• • •]"
+    - "[• • • •]"
+    - "[• • • • •]"
+```
+
+## Model Scaling
+
+Makes higher-tier mobs physically larger.
+
+```yaml
+Model:
+  enableModelScaling: true
+  # Scale multipliers (1.0 = vanilla size)
+  modelScaleMultiplierPerTier:
+    - 0.74 # Tier 1 (Smaller/Standard)
+    - 0.85
+    - 0.96
+    - 1.07
+    - 1.18 # Tier 5 (18% larger)
+    
+  # Random variance to prevent uniform clones
+  modelScaleRandomVariance: 0.04
+```
+
+## Asset Generation
+
+Internal settings for generating tiered asset files. You generally do not need to touch this unless you are customizing the resource pack generation logic.
+
+```yaml
+AssetGenerator:
+  tierSuffixes: ["Tier_1", "Tier_2", "Tier_3", "Tier_4", "Tier_5"]
+```

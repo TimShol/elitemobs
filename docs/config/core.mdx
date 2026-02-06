@@ -1,0 +1,59 @@
+---
+title: Core Settings (core.yml)
+description: Global settings for spawning, diagnostics, reconciliation, and compatibility.
+---
+
+EliteMobs was built with global systems defined in `core.yml`. These settings affect how elites spawn, how the mod behaves during reloads, and diagnostic output.
+
+## System
+
+```yaml
+System:
+  configVersion: "1.1.0"
+```
+
+This is auto-managed. You should not edit it.
+
+## Reconcile
+
+Reconcile updates existing elites after a config reload.
+
+```yaml
+Reconcile:
+  announceReconcile: true
+  reconcileWindowTicks: 40
+```
+
+- `reconcileWindowTicks`: ticks to re-apply features to existing elites after reload. `0` disables.
+- `announceReconcile`: logs when reconcile starts and ends.
+
+## Debug
+
+```yaml
+Debug:
+  isDebugModeEnabled: true
+  debugMobRuleScanIntervalSeconds: 5
+```
+
+Enables extra logs for spawn scans and ability decisions. The scan interval controls how often NPCs are evaluated against mob rules.
+
+## Compatibility Messages
+
+```yaml
+Compat:
+  showCompatJoinMessages: true
+```
+
+Shows compatibility messages when players join, useful for identifying active integrations.
+
+## Spawning
+
+Spawning logic remains in `core.yml`. See [Spawning](/EliteMobs_spawning) for full details.
+
+## Health & Damage Scaling
+
+These have been moved to `stats.yml`.
+
+## Gear & Asset Generation
+
+Gear durability and catalogs have been moved to `gear.yml`. Asset generator naming has been moved to `visuals.yml`.

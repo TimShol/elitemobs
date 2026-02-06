@@ -54,7 +54,7 @@ public final class EliteMobsConfig {
     public static final int SUMMON_MAX_ALIVE_MAX = 50;
 
     @CfgVersion
-    @Cfg(group = "System", file = "main.yml", comment = "Configuration version. Automatically updated by the mod.")
+    @Cfg(group = "System", file = "core.yml", comment = "Configuration version. Automatically updated by the mod.")
     public String configVersion = "0.0.0";
 
     public final SpawningConfig spawning = new SpawningConfig();
@@ -66,13 +66,18 @@ public final class EliteMobsConfig {
     public final LootConfig loot = new LootConfig();
     public final NameplatesConfig nameplates = new NameplatesConfig();
     public final AssetGeneratorConfig assetGenerator = new AssetGeneratorConfig();
-    public final CatalogsConfig catalogs = new CatalogsConfig();
     public final AbilitiesConfig abilities = new AbilitiesConfig();
     public final EffectsConfig effects = new EffectsConfig();
     public final ConsumablesConfig consumables = new ConsumablesConfig();
     public final DebugConfig debug = new DebugConfig();
     public final CompatConfig compat = new CompatConfig();
     public final ReconcileConfig reconcile = new ReconcileConfig();
+
+    public enum ProgressionStyle {
+        ENVIRONMENT,         // Tiers are based on the Hytale zone/environment.
+        DISTANCE_FROM_SPAWN, // Tiers and stats scale linearly based on distance from (0,0).
+        NONE                 // Any tier can spawn anywhere based on global weights.
+    }
 
     private static Map<String, List<String>> defaultTierPrefixes() {
         Map<String, List<String>> m = new LinkedHashMap<>();
@@ -537,39 +542,39 @@ public final class EliteMobsConfig {
     }
 
     public static final class NameplatesConfig {
-        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Enable nameplates for EliteMobs.")
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Enable or disable nameplates globally.")
         public boolean nameplatesEnabled = true;
 
-        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Nameplate formatting mode: Currently only RANKED_ROLE is supported.")
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Nameplate style: RANKED_ROLE (recommended) or SIMPLE.")
         public NameplateMode nameplateMode = NameplateMode.RANKED_ROLE;
 
-        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Tier prefixes per mob family. Each entry must have exactly 5 values (tier 1–5).")
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Tier-based name prefixes per family (Zombie, Skeleton, etc.). Each list must have 5 values.")
         public Map<String, List<String>> tierPrefixesByFamily = defaultTierPrefixes();
 
         @FixedArraySize(TIERS_AMOUNT)
         @Default
-        @Cfg(group = "Nameplates", file = "visuals.yml")
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Visual indicators for each tier.")
         public String[] nameplatePrefixPerTier = {"[•]", "[• •]", "[• • •]", "[• • • •]", "[• • • • •]"};
 
-        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Only apply nameplates to NPC roles that contain any of these NPC ids (case-insensitive). Empty = allow all.")
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Include specific role names (case-insensitive). Empty allows all.")
         public List<String> nameplateMustContainRoles = List.of();
 
-        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Never apply nameplates to NPC roles that contain any of these NPC ids (case-insensitive). Empty = allow all.")
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Exclude specific role names (case-insensitive).")
         public List<String> nameplateMustNotContainRoles = List.of();
 
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Enable nameplates per tier.")
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Enable nameplates for specific tiers.")
         public boolean[] nameplatesEnabledPerTier = {true, true, true, true, true};
     }
 
     public static final class ReconcileConfig {
         @Min(0.0)
         @Default
-        @Cfg(group = "Reconcile", file = "main.yml", comment = "How many world ticks to reconcile existing elites after a config reload. 0 = disable.")
+        @Cfg(group = "Reconcile", file = "core.yml", comment = "Ticks to reconcile existing elites after a config reload (0 to disable).")
         public int reconcileWindowTicks = 40;
 
         @Default
-        @Cfg(group = "Reconcile", file = "main.yml", comment = "Log a message when reconcile starts and ends.")
+        @Cfg(group = "Reconcile", file = "core.yml", comment = "Announce when reconciliation starts and ends in the logs.")
         public boolean announceReconcile = true;
     }
 
@@ -578,16 +583,47 @@ public final class EliteMobsConfig {
     }
 
     public static final class SpawningConfig {
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Global chance for a mob to become Elite (0.0 to 1.0).")
+        public float globalSpawnChance = 0.15f;
+
         @Default
-        @Cfg(group = "Spawning", file = "main.yml", comment = "Enable per-environment tier spawn chances (progressive mode).")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Progression system: ENVIRONMENT (Zone-based), DISTANCE_FROM_SPAWN (Linear scaling), or NONE (Random).")
+        public ProgressionStyle progressionStyle = ProgressionStyle.ENVIRONMENT;
+
+        @Default
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Blocks required per tier transition (e.g. 1000m = Tier 1, 2000m = Tier 2).")
+        public double distancePerTier = 1000.0;
+
+        @Default
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Block interval for applying bonus stats (e.g. every 100 blocks).")
+        public double distanceBonusInterval = 100.0;
+
+        @Default
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Health multiplier bonus added per interval (0.01 = +1% health every 100m).")
+        public float distanceHealthBonusPerInterval = 0.01f;
+
+        @Default
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Damage multiplier bonus added per interval (0.005 = +0.5% damage every 100m).")
+        public float distanceDamageBonusPerInterval = 0.005f;
+
+        @Default
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Max bonus health multiplier added by distance progression (0.5 = +50% base health max).")
+        public float distanceHealthBonusCap = 0.5f;
+
+        @Default
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Max bonus damage multiplier added by distance progression (0.5 = +50% base damage max).")
+        public float distanceDamageBonusCap = 0.5f;
+
+        @Default
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Used if style is ENVIRONMENT. Enable zone-specific tier probabilities.")
         public boolean enableEnvironmentTierSpawns = true;
 
         @Default
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Spawning", file = "main.yml", comment = "Base tier spawn chances (used when no environment override is found). Higher = more common.")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Global tier weights used for NONE style or as fallback. Higher = more common.")
         public double[] spawnChancePerTier = {0.46, 0.28, 0.16, 0.08, 0.04};
 
-        @Cfg(group = "Spawning", file = "main.yml", comment = "Per-environment tier chances. Key = Environment id (e.g. Env_Zone1_Forests). If enabled=false, elites never spawn there.")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Zone-specific rules. Key is environment id (e.g. Env_Zone1_Forests).")
         public Map<String, EnvironmentTierRule> environmentTierSpawns = defaultEnvironmentTierSpawns();
     }
 
@@ -603,18 +639,18 @@ public final class EliteMobsConfig {
     public static final class HealthConfig {
         @Default
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Health", file = "main.yml", comment = "Health multiplier per tier used to compute max-health in SpawnSystem.")
+        @Cfg(group = "Health", file = "stats.yml", comment = "Base health multiplier per tier.")
         public float[] healthMultiplierPerTier = {0.1f, 0.5f, 1.1f, 1.8f, 2.6f};
 
         @Default
-        @Cfg(group = "Health", file = "main.yml", comment = "Enable health scaling.")
+        @Cfg(group = "Health", file = "stats.yml", comment = "Enable or disable health scaling for EliteMobs.")
         public boolean enableHealthScaling = true;
     }
 
     public static final class AssetGeneratorConfig {
         @Default
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "AssetGenerator", file = "main.yml", comment = "Tier suffixes for Asset Generator.")
+        @Cfg(group = "AssetGenerator", file = "visuals.yml", comment = "Tier suffixes for Asset Generator.")
         public String[] tierSuffixes = {"Tier_1", "Tier_2", "Tier_3", "Tier_4", "Tier_5"};
     }
 
@@ -622,76 +658,487 @@ public final class EliteMobsConfig {
         @Min(0.001)
         @Max(1.0)
         @Default
-        @Cfg(group = "Gear", file = "main.yml", comment = "Spawn durability min as fraction of max.")
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Minimum item durability fraction on spawn (0.0 to 1.0).")
         public double spawnGearDurabilityMin = 0.02;
 
         @Min(0.001)
         @Max(1.0)
         @Default
-        @Cfg(group = "Gear", file = "main.yml", comment = "Spawn durability max as fraction of max.")
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Maximum item durability fraction on spawn (0.0 to 1.0).")
         public double spawnGearDurabilityMax = 0.30;
+
+        @Default
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Weapon ID's that contain these words will be marked as two-handed (no shield).")
+        public List<String> twoHandedWeaponIds = new ArrayList<>(List.of("shortbow",
+                                                                         "crossbow",
+                                                                         "spear",
+                                                                         "staff",
+                                                                         "battleaxe",
+                                                                         "longsword",
+                                                                         "bomb"
+        ));
+
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Weapon rarity rules: maps ID fragments to rarities. First match wins.")
+        public Map<String, String> weaponRarityRulesContains = defaultWeaponRarityRulesContains();
+
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Armor rarity rules: maps ID fragments to rarities. First match wins.")
+        public Map<String, String> armorRarityRulesContains = defaultArmorRarityRulesContains();
+
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Allowed rarities per tier (Tier 1-5).")
+        public List<List<String>> tierAllowedRarities = defaultTierAllowedRarities();
+
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Probability of equipping a rarity per tier.")
+        public List<Map<String, Double>> tierEquipmentRarityWeights = defaultTierRarityWeights();
+
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Valid weapon IDs for Elite generation.")
+        public List<String> weaponCatalog = defaultWeaponCatalog();
+
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Valid armor materials for Elite generation.")
+        public List<String> armorMaterials = defaultArmorMaterials();
+
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Number of armor slots to fill per tier (0-4).")
+        public int[] armorPiecesToEquipPerTier = {0, 1, 2, 3, 4};
+
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Probability of equipping a utility item (shield/torch) per tier.")
+        public double[] shieldUtilityChancePerTier = {0.0, 0.0, 0.20, 0.40, 0.60};
+    }
+
+    private static Map<String, String> defaultWeaponRarityRulesContains() {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("scarab", "common");
+        m.put("silversteel", "common");
+        m.put("iron_rusty", "common");
+        m.put("steel_rusty", "common");
+        m.put("wood", "common");
+        m.put("crude", "common");
+        m.put("copper", "common");
+
+        m.put("iron", "uncommon");
+        m.put("stone", "uncommon");
+        m.put("steel", "uncommon");
+        m.put("scrap", "uncommon");
+        m.put("bronze_ancient", "uncommon");
+        m.put("bronze", "uncommon");
+        m.put("potion_poison", "uncommon");
+
+        m.put("thorium", "rare");
+        m.put("spectral", "rare");
+        m.put("bone", "rare");
+        m.put("doomed", "rare");
+        m.put("cobalt", "rare");
+        m.put("ancient_steel", "rare");
+        m.put("steel_ancient", "rare");
+        m.put("tribal", "rare");
+        m.put("bomb_stun", "rare");
+
+        m.put("adamantite", "epic");
+        m.put("onyxium", "epic");
+        m.put("mithril", "epic");
+        m.put("void", "epic");
+        m.put("Halloween_Broomstick", "epic");
+        m.put("bomb_continuous", "epic");
+        m.put("praetorian", "epic");
+
+        m.put("flame", "legendary");
+
+        return m;
+    }
+
+    private static Map<String, String> defaultArmorRarityRulesContains() {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("cotton", "common");
+        m.put("linen", "common");
+        m.put("silk", "common");
+        m.put("wool", "common");
+        m.put("wood", "common");
+        m.put("copper", "common");
+        m.put("club_zombie", "common");
+
+        m.put("diving", "uncommon");
+        m.put("kweebec", "uncommon");
+        m.put("leather", "uncommon");
+        m.put("trork", "uncommon");
+        m.put("iron", "uncommon");
+        m.put("steel", "uncommon");
+        m.put("bronze", "uncommon");
+
+        m.put("thorium", "rare");
+        m.put("cobalt", "rare");
+        m.put("steel_ancient", "rare");
+        m.put("cindercloth", "rare");
+        m.put("bronze_ornate", "rare");
+
+        m.put("prisma", "epic");
+        m.put("adamantite", "epic");
+        m.put("mithril", "epic");
+        m.put("praetorian", "epic");
+        m.put("onyxium", "epic");
+
+        return m;
+    }
+
+    private static List<List<String>> defaultTierAllowedRarities() {
+        return List.of(List.of("common"),                    // tier 0
+                       List.of("uncommon"),                  // tier 1
+                       List.of("rare"),                      // tier 2
+                       List.of("epic"),                      // tier 3
+                       List.of("epic", "legendary")           // tier 4
+        );
+    }
+
+    private static List<Map<String, Double>> defaultTierRarityWeights() {
+        return List.of(mapOf("common", 1.0),                              // tier 0
+                       mapOf("uncommon", 1.0),                            // tier 1
+                       mapOf("rare", 0.70, "uncommon", 0.30),             // tier 2
+                       mapOf("epic", 0.70, "rare", 0.30),                 // tier 3
+                       mapOf("legendary", 0.40, "epic", 0.60)             // tier 4
+        );
+    }
+
+    private static List<String> defaultWeaponCatalog() {
+        return new ArrayList<>(List.of("Weapon_Axe_Adamantite",
+                                       "Weapon_Axe_Bone",
+                                       "Weapon_Axe_Cobalt",
+                                       "Weapon_Axe_Copper",
+                                       "Weapon_Axe_Crude",
+                                       "Weapon_Axe_Doomed",
+                                       "Weapon_Axe_Iron_Rusty",
+                                       "Weapon_Axe_Iron",
+                                       "Weapon_Axe_Mithril",
+                                       "Weapon_Axe_Onyxium",
+                                       "Weapon_Axe_Stone_Trork",
+                                       "Weapon_Axe_Thorium",
+                                       "Weapon_Axe_Tribal",
+
+                                       // Battleaxe
+                                       "Weapon_Battleaxe_Adamantite",
+                                       "Weapon_Battleaxe_Cobalt",
+                                       "Weapon_Battleaxe_Copper",
+                                       "Weapon_Battleaxe_Crude",
+                                       "Weapon_Battleaxe_Doomed",
+                                       "Weapon_Battleaxe_Iron",
+                                       "Weapon_Battleaxe_Mithril",
+                                       "Weapon_Battleaxe_Onyxium",
+                                       "Weapon_Battleaxe_Scarab",
+                                       "Weapon_Battleaxe_Scythe_Void",
+                                       "Weapon_Battleaxe_Steel_Rusty",
+                                       "Weapon_Battleaxe_Stone_Trork",
+                                       "Weapon_Battleaxe_Thorium",
+                                       "Weapon_Battleaxe_Tribal",
+                                       "Weapon_Battleaxe_Wood_Fence",
+
+                                       // Club
+                                       "Weapon_Club_Adamantite",
+                                       "Weapon_Club_Cobalt",
+                                       "Weapon_Club_Copper",
+                                       "Weapon_Club_Crude",
+                                       "Weapon_Club_Doomed",
+                                       "Weapon_Club_Iron_Rusty",
+                                       "Weapon_Club_Iron",
+                                       "Weapon_Club_Mithril",
+                                       "Weapon_Club_Onyxium",
+                                       "Weapon_Club_Scrap",
+                                       "Weapon_Club_Steel_Flail_Rusty",
+                                       "Weapon_Club_Stone_Trork",
+                                       "Weapon_Club_Thorium",
+                                       "Weapon_Club_Tribal",
+                                       "Weapon_Club_Zombie_Arm",
+                                       "Weapon_Club_Zombie_Burnt_Arm",
+                                       "Weapon_Club_Zombie_Burnt_Leg",
+                                       "Weapon_Club_Zombie_Frost_Arm",
+                                       "Weapon_Club_Zombie_Frost_Leg",
+                                       "Weapon_Club_Zombie_Leg",
+                                       "Weapon_Club_Zombie_Sand_Arm",
+                                       "Weapon_Club_Zombie_Sand_Leg",
+
+                                       // Crossbow
+                                       "Weapon_Crossbow_Ancient_Steel",
+                                       "Weapon_Crossbow_Iron",
+
+                                       // Daggers
+                                       "Weapon_Daggers_Adamantite_Saurian",
+                                       "Weapon_Daggers_Adamantite",
+                                       "Weapon_Daggers_Bone",
+                                       "Weapon_Daggers_Bronze_Ancient",
+                                       "Weapon_Daggers_Bronze",
+                                       "Weapon_Daggers_Claw_Bone",
+                                       "Weapon_Daggers_Cobalt",
+                                       "Weapon_Daggers_Copper",
+                                       "Weapon_Daggers_Crude",
+                                       "Weapon_Daggers_Doomed",
+                                       "Weapon_Daggers_Fang_Doomed",
+                                       "Weapon_Daggers_Iron",
+                                       "Weapon_Daggers_Mithril",
+                                       "Weapon_Daggers_Onyxium",
+                                       "Weapon_Daggers_Stone_Trork",
+                                       "Weapon_Daggers_Thorium",
+
+                                       // Longsword
+                                       "Weapon_Longsword_Adamantite_Saurian",
+                                       "Weapon_Longsword_Adamantite",
+                                       "Weapon_Longsword_Cobalt",
+                                       "Weapon_Longsword_Copper",
+                                       "Weapon_Longsword_Crude",
+                                       "Weapon_Longsword_Flame",
+                                       "Weapon_Longsword_Iron",
+                                       "Weapon_Longsword_Katana",
+                                       "Weapon_Longsword_Mithril",
+                                       "Weapon_Longsword_Onyxium",
+                                       "Weapon_Longsword_Praetorian",
+                                       "Weapon_Longsword_Scarab",
+                                       "Weapon_Longsword_Spectral",
+                                       "Weapon_Longsword_Stone_Trork",
+                                       "Weapon_Longsword_Thorium",
+                                       "Weapon_Longsword_Tribal",
+                                       "Weapon_Longsword_Void",
+
+                                       // Mace
+                                       "Weapon_Mace_Adamantite",
+                                       "Weapon_Mace_Cobalt",
+                                       "Weapon_Mace_Copper",
+                                       "Weapon_Mace_Crude",
+                                       "Weapon_Mace_Iron",
+                                       "Weapon_Mace_Mithril",
+                                       "Weapon_Mace_Onyxium",
+                                       "Weapon_Mace_Prisma",
+                                       "Weapon_Mace_Scrap",
+                                       "Weapon_Mace_Stone_Trork",
+                                       "Weapon_Mace_Thorium",
+
+                                       // Shield
+                                       "Weapon_Shield_Adamantite",
+                                       "Weapon_Shield_Cobalt",
+                                       "Weapon_Shield_Copper",
+                                       "Weapon_Shield_Doomed",
+                                       "Weapon_Shield_Iron",
+                                       "Weapon_Shield_Mithril",
+                                       "Weapon_Shield_Onyxium",
+                                       "Weapon_Shield_Orbis_Incandescent",
+                                       "Weapon_Shield_Orbis_Knight",
+                                       "Weapon_Shield_Praetorian",
+                                       "Weapon_Shield_Rusty",
+                                       "Weapon_Shield_Scrap_Spiked",
+                                       "Weapon_Shield_Scrap",
+                                       "Weapon_Shield_Thorium",
+                                       "Weapon_Shield_Wood",
+
+                                       // Shortbow
+                                       "Weapon_Shortbow_Adamantite",
+                                       "Weapon_Shortbow_Bomb",
+                                       "Weapon_Shortbow_Bronze",
+                                       "Weapon_Shortbow_Cobalt",
+                                       "Weapon_Shortbow_Combat",
+                                       "Weapon_Shortbow_Copper",
+                                       "Weapon_Shortbow_Crude",
+                                       "Weapon_Shortbow_Doomed",
+                                       "Weapon_Shortbow_Flame",
+                                       "Weapon_Shortbow_Frost",
+                                       "Weapon_Shortbow_Iron_Rusty",
+                                       "Weapon_Shortbow_Iron",
+                                       "Weapon_Shortbow_Mithril",
+                                       "Weapon_Shortbow_Onyxium",
+                                       "Weapon_Shortbow_Pull",
+                                       "Weapon_Shortbow_Ricochet",
+                                       "Weapon_Shortbow_Thorium",
+                                       "Weapon_Shortbow_Vampire",
+
+                                       // Spear
+                                       "Weapon_Spear_Adamantite_Saurian",
+                                       "Weapon_Spear_Adamantite",
+                                       "Weapon_Spear_Bone",
+                                       "Weapon_Spear_Bronze",
+                                       "Weapon_Spear_Cobalt",
+                                       "Weapon_Spear_Copper",
+                                       "Weapon_Spear_Crude",
+                                       "Weapon_Spear_Double_Incandescent",
+                                       "Weapon_Spear_Fishbone",
+                                       "Weapon_Spear_Iron",
+                                       "Weapon_Spear_Leaf",
+                                       "Weapon_Spear_Mithril",
+                                       "Weapon_Spear_Onyxium",
+                                       "Weapon_Spear_Scrap",
+                                       "Weapon_Spear_Stone_Trork",
+                                       "Weapon_Spear_Thorium",
+                                       "Weapon_Spear_Tribal",
+
+                                       // Staff
+                                       "Halloween_Broomstick",
+                                       "Weapon_Staff_Adamantite",
+                                       "Weapon_Staff_Bo_Bamboo",
+                                       "Weapon_Staff_Bo_Wood",
+                                       "Weapon_Staff_Bone",
+                                       "Weapon_Staff_Bronze",
+                                       "Weapon_Staff_Cane",
+                                       "Weapon_Staff_Cobalt",
+                                       "Weapon_Staff_Copper",
+                                       "Weapon_Staff_Crystal_Fire_Trork",
+                                       "Weapon_Staff_Crystal_Flame",
+                                       "Weapon_Staff_Crystal_Ice",
+                                       "Weapon_Staff_Crystal_Purple",
+                                       "Weapon_Staff_Crystal_Red",
+                                       "Weapon_Staff_Doomed",
+                                       "Weapon_Staff_Frost",
+                                       "Weapon_Staff_Iron",
+                                       "Weapon_Staff_Mithril",
+                                       "Weapon_Staff_Onion",
+                                       "Weapon_Staff_Onyxium",
+                                       "Weapon_Staff_Thorium",
+                                       "Weapon_Staff_Wizard",
+                                       "Weapon_Staff_Wood_Kweebec",
+                                       "Weapon_Staff_Wood_Rotten",
+                                       "Weapon_Staff_Wood",
+
+                                       // Sword
+                                       "Weapon_Sword_Adamantite",
+                                       "Weapon_Sword_Bone",
+                                       "Weapon_Sword_Bronze_Ancient",
+                                       "Weapon_Sword_Bronze",
+                                       "Weapon_Sword_Cobalt",
+                                       "Weapon_Sword_Copper",
+                                       "Weapon_Sword_Crude",
+                                       "Weapon_Sword_Cutlass",
+                                       "Weapon_Sword_Doomed",
+                                       "Weapon_Sword_Frost",
+                                       "Weapon_Sword_Iron",
+                                       "Weapon_Sword_Mithril",
+                                       "Weapon_Sword_Nexus",
+                                       "Weapon_Sword_Onyxium",
+                                       "Weapon_Sword_Runic",
+                                       "Weapon_Sword_Scrap",
+                                       "Weapon_Sword_Silversteel",
+                                       "Weapon_Sword_Steel_Incandescent",
+                                       "Weapon_Sword_Steel_Rusty",
+                                       "Weapon_Sword_Steel",
+                                       "Weapon_Sword_Stone_Trork",
+                                       "Weapon_Sword_Thorium",
+                                       "Weapon_Sword_Wood",
+
+                                       //Pickaxe
+                                       "Tool_Pickaxe_Adamantite",
+                                       "Tool_Pickaxe_Cobalt",
+                                       "Tool_Pickaxe_Copper",
+                                       "Tool_Pickaxe_Crude",
+                                       "Tool_Pickaxe_Iron",
+                                       "Tool_Pickaxe_Mithril",
+                                       "Tool_Pickaxe_Onyxium",
+                                       "Tool_Pickaxe_Scrap",
+                                       "Tool_Pickaxe_Thorium",
+                                       "Tool_Pickaxe_Wood",
+
+                                       //Bombs
+                                       "Weapon_Bomb",
+                                       "Weapon_Bomb_Stun",
+                                       "Weapon_Bomb_Potion_Poison",
+                                       "Weapon_Bomb_Continuous",
+
+                                       //Kunai
+                                       "Weapon_Kunai",
+
+                                       "Weapon_Gun_Blunderbuss",
+                                       "Weapon_Gun_Blunderbuss_Rusty",
+
+                                       "Weapon_Spellbook_Demon",
+                                       "Weapon_Spellbook_Fire",
+                                       "Weapon_Spellbook_Grimoire_Brown",
+                                       "Weapon_Spellbook_Grimoire_Purple",
+                                       "Weapon_Spellbook_Rekindle_Embers"
+        ));
+    }
+
+    private static List<String> defaultArmorMaterials() {
+        return new ArrayList<>(List.of("Adamantite",
+                                       "Bronze",
+                                       "Bronze_Ornate",
+                                       "Cloth_Cindercloth",
+                                       "Cloth_Cotton",
+                                       "Cloth_Linen",
+                                       "Cloth_Silk",
+                                       "Cloth_Wool",
+                                       "Cobalt",
+                                       "Copper",
+                                       "Diving_Crude",
+                                       "Iron",
+                                       "Kweebec",
+                                       "Leather_Heavy",
+                                       "Leather_Light",
+                                       "Leather_Medium",
+                                       "Leather_Raven",
+                                       "Leather_Soft",
+                                       "Mithril",
+                                       "Onyxium",
+                                       "Prisma",
+                                       "Steel",
+                                       "Steel_Ancient",
+                                       "Thorium",
+                                       "Trork",
+                                       "Wood"
+        ));
     }
 
     public static final class ModelConfig {
         @Default
-        @Cfg(group = "Model", file = "visuals.yml", comment = "Enable model scaling.")
+        @Cfg(group = "Model", file = "visuals.yml", comment = "Enable or disable physical size scaling per tier.")
         public boolean enableModelScaling = true;
 
         @Default
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Model", file = "visuals.yml", comment = "Model scale multiplier per tier. I wouldn't tweak this too much since hitboxes freak out.")
+        @Cfg(group = "Model", file = "visuals.yml", comment = "Physical scale multiplier per tier.")
         public float[] modelScaleMultiplierPerTier = {0.74f, 0.85f, 0.96f, 1.07f, 1.18f};
 
         @Min(0.0)
         @Max(0.2)
         @Default
-        @Cfg(group = "Model", file = "visuals.yml", comment = "Random variance applied to model scale. Example 0.04 => +/-4%.")
-        public float modelScaleRandomVariance = 0.04f; // +/- 3%
+        @Cfg(group = "Model", file = "visuals.yml", comment = "Random size variance (e.g., 0.04 = +/-4% size).")
+        public float modelScaleRandomVariance = 0.04f;
     }
 
     public static final class LootConfig {
         @Min(0.0)
         @Max(1.0)
         @Default
-        @Cfg(group = "Loot", file = "drops.yml", comment = "Weapon drop chance.")
+        @Cfg(group = "Loot", file = "loot.yml", comment = "Chance for an Elite to drop its main-hand weapon.")
         public double dropWeaponChance = 0.05;
 
         @Min(0.0)
         @Max(1.0)
         @Default
-        @Cfg(group = "Loot", file = "drops.yml", comment = "Armor piece drop chance.")
+        @Cfg(group = "Loot", file = "loot.yml", comment = "Chance for an Elite to drop an armor piece.")
         public double dropArmorPieceChance = 0.05;
 
         @Min(0.0)
         @Max(1.0)
         @Default
-        @Cfg(group = "Loot", file = "drops.yml", comment = "Utility item (shields, torches, ...) drop chance.")
+        @Cfg(group = "Loot", file = "loot.yml", comment = "Chance for an Elite to drop its off-hand item (shields, torches, etc.).")
         public double dropOffhandItemChance = 0.05;
 
         @Default
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Loot", file = "drops.yml", comment = "Multiplies vanilla resource drops per tier.")
+        @Cfg(group = "Loot", file = "loot.yml", comment = "Multiplies vanilla loot amounts per tier.")
         public int[] vanillaDroplistMultiplierPerTier = {0, 0, 2, 4, 6};
 
-        @Cfg(group = "Loot", file = "drops.yml", comment = "Extra rare drops rules. Minimum mob tier is 0 , Maximum mob tier is 4.")
+        @Cfg(group = "Loot", file = "loot.yml", comment = "Custom loot tables for specific tiers.")
         public List<ExtraDropRule> extraDrops = defaultExtraDrops();
     }
 
     public static final class DamageConfig {
         @Default
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Damage", file = "main.yml", comment = "Damage dealt by mobs multiplier per tier.")
+        @Cfg(group = "Damage", file = "stats.yml", comment = "Base damage multiplier per tier.")
         public float[] mobDamageMultiplierPerTier = {0.6f, 1.1f, 1.6f, 2.1f, 2.6f};
 
         @Default
-        @Cfg(group = "Damage", file = "main.yml", comment = "Enables damage multiplier dealt by mobs.")
+        @Cfg(group = "Damage", file = "stats.yml", comment = "Enable or disable damage scaling.")
         public boolean enableMobDamageMultiplier = true;
 
         @Default
         @Min(0.0)
         @Max(1.0)
-        @Cfg(group = "Damage", file = "main.yml", comment = "Adds a random variance to the damage dealt by mobs multiplier.")
-        public float mobDamageRandomVariance = 0.05f; // +/- 5%
+        @Cfg(group = "Damage", file = "stats.yml", comment = "Random damage variance multiplier (e.g. 0.05 = +/-5% damage).")
+        public float mobDamageRandomVariance = 0.05f;
     }
 
     private static List<ExtraDropRule> defaultExtraDrops() {
@@ -805,7 +1252,7 @@ public final class EliteMobsConfig {
 
     public static final class EffectsConfig {
         @Default
-        @Cfg(file = "effects.yml", comment = "Effects configuration lives here. Say hello.")
+        @Cfg(group = "Effects", file = "effects.yml", comment = "Effects configuration lives here. Say hello.")
         public Map<String, EntityEffectConfig> byId = defaultEntityEffects();
     }
 
@@ -837,430 +1284,19 @@ public final class EliteMobsConfig {
 
     public static final class DebugConfig {
         @Default
-        @Cfg(group = "Debug", file = "main.yml", comment = "Enables debug mode.")
+        @Cfg(group = "Debug", file = "core.yml", comment = "Enables debug mode.")
         public boolean isDebugModeEnabled = true;
 
         @Min(1.0)
         @Default
-        @Cfg(group = "Debug", file = "main.yml", comment = "Debug interval for scanning NPC's that match the MobRules in seconds.")
+        @Cfg(group = "Debug", file = "core.yml", comment = "Debug interval for scanning NPC's that match the MobRules in seconds.")
         public int debugMobRuleScanIntervalSeconds = 5;
     }
 
     public static final class CompatConfig {
         @Default
-        @Cfg(group = "Compat", file = "main.yml", comment = "Show compatibility messages to players when they join.")
+        @Cfg(group = "Compat", file = "core.yml", comment = "Show compatibility messages to players when they join.")
         public boolean showCompatJoinMessages = true;
-    }
-
-    public static final class CatalogsConfig {
-        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Weapon rarity rules: checks if the weapon id contains 'scarab' for example, and maps that to a rarity. First match wins if added multiple times.")
-        public Map<String, String> weaponRarityRulesContains = defaultWeaponRarityRulesContains();
-
-        private static Map<String, String> defaultWeaponRarityRulesContains() {
-            Map<String, String> m = new LinkedHashMap<>();
-            m.put("scarab", "common");
-            m.put("silversteel", "common");
-            m.put("iron_rusty", "common");
-            m.put("steel_rusty", "common");
-            m.put("wood", "common");
-            m.put("crude", "common");
-            m.put("copper", "common");
-
-            m.put("iron", "uncommon");
-            m.put("stone", "uncommon");
-            m.put("steel", "uncommon");
-            m.put("scrap", "uncommon");
-            m.put("bronze_ancient", "uncommon");
-            m.put("bronze", "uncommon");
-            m.put("potion_poison", "uncommon");
-
-            m.put("thorium", "rare");
-            m.put("spectral", "rare");
-            m.put("bone", "rare");
-            m.put("doomed", "rare");
-            m.put("cobalt", "rare");
-            m.put("ancient_steel", "rare");
-            m.put("steel_ancient", "rare");
-            m.put("tribal", "rare");
-            m.put("bomb_stun", "rare");
-
-            m.put("adamantite", "epic");
-            m.put("onyxium", "epic");
-            m.put("mithril", "epic");
-            m.put("void", "epic");
-            m.put("Halloween_Broomstick", "epic");
-            m.put("bomb_continuous", "epic");
-            m.put("praetorian", "epic");
-
-            m.put("flame", "legendary");
-
-            return m;
-        }
-
-        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Armor rarity rules: checks if the armor id contains 'cotton' for example, and maps that to a rarity. First match wins if added multiple times.")
-        public Map<String, String> armorRarityRulesContains = defaultArmorRarityRulesContains();
-
-        private static Map<String, String> defaultArmorRarityRulesContains() {
-            Map<String, String> m = new LinkedHashMap<>();
-            m.put("cotton", "common");
-            m.put("linen", "common");
-            m.put("silk", "common");
-            m.put("wool", "common");
-            m.put("wood", "common");
-            m.put("copper", "common");
-            m.put("club_zombie", "common");
-
-            m.put("diving", "uncommon");
-            m.put("kweebec", "uncommon");
-            m.put("leather", "uncommon");
-            m.put("trork", "uncommon");
-            m.put("iron", "uncommon");
-            m.put("steel", "uncommon");
-            m.put("bronze", "uncommon");
-
-            m.put("thorium", "rare");
-            m.put("cobalt", "rare");
-            m.put("steel_ancient", "rare");
-            m.put("cindercloth", "rare");
-            m.put("bronze_ornate", "rare");
-
-            m.put("prisma", "epic");
-            m.put("adamantite", "epic");
-            m.put("mithril", "epic");
-            m.put("praetorian", "epic");
-            m.put("onyxium", "epic");
-
-            return m;
-        }
-
-        @Cfg(group = "Gear", file = "catalogs.yml", comment = "What tiers are allowed which rarities and weights. To do: fix naming so it's consistent. Common = tier 0, Elite = tier 4.")
-        public List<List<String>> tierAllowedRarities = defaultTierAllowedRarities();
-
-        private static List<List<String>> defaultTierAllowedRarities() {
-            return List.of(List.of("common"),                    // tier 0
-                           List.of("uncommon"),                  // tier 1
-                           List.of("rare"),                      // tier 2
-                           List.of("epic"),                      // tier 3
-                           List.of("epic", "legendary")           // tier 4
-            );
-        }
-
-        @Cfg(group = "Gear", file = "catalogs.yml", comment = "The chance that the tier will equip something of that rarity.")
-        public List<Map<String, Double>> tierEquipmentRarityWeights = defaultTierRarityWeights();
-
-        private static List<Map<String, Double>> defaultTierRarityWeights() {
-            return List.of(mapOf("common", 1.0),                              // tier 0
-                           mapOf("uncommon", 1.0),                            // tier 1
-                           mapOf("rare", 0.70, "uncommon", 0.30),             // tier 2
-                           mapOf("epic", 0.70, "rare", 0.30),                 // tier 3
-                           mapOf("legendary", 0.40, "epic", 0.60)             // tier 4
-            );
-        }
-
-
-        // Weapon catalog (IDs)
-        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Weapon catalog (IDs). You can reference the Asset Editor or the ID displayed when you hover over an item in the creative inventory.")
-        public List<String> weaponCatalog = new ArrayList<>(List.of("Weapon_Axe_Adamantite",
-                                                                    "Weapon_Axe_Bone",
-                                                                    "Weapon_Axe_Cobalt",
-                                                                    "Weapon_Axe_Copper",
-                                                                    "Weapon_Axe_Crude",
-                                                                    "Weapon_Axe_Doomed",
-                                                                    "Weapon_Axe_Iron_Rusty",
-                                                                    "Weapon_Axe_Iron",
-                                                                    "Weapon_Axe_Mithril",
-                                                                    "Weapon_Axe_Onyxium",
-                                                                    "Weapon_Axe_Stone_Trork",
-                                                                    "Weapon_Axe_Thorium",
-                                                                    "Weapon_Axe_Tribal",
-
-                // Battleaxe
-                                                                    "Weapon_Battleaxe_Adamantite",
-                                                                    "Weapon_Battleaxe_Cobalt",
-                                                                    "Weapon_Battleaxe_Copper",
-                                                                    "Weapon_Battleaxe_Crude",
-                                                                    "Weapon_Battleaxe_Doomed",
-                                                                    "Weapon_Battleaxe_Iron",
-                                                                    "Weapon_Battleaxe_Mithril",
-                                                                    "Weapon_Battleaxe_Onyxium",
-                                                                    "Weapon_Battleaxe_Scarab",
-                                                                    "Weapon_Battleaxe_Scythe_Void",
-                                                                    "Weapon_Battleaxe_Steel_Rusty",
-                                                                    "Weapon_Battleaxe_Stone_Trork",
-                                                                    "Weapon_Battleaxe_Thorium",
-                                                                    "Weapon_Battleaxe_Tribal",
-                                                                    "Weapon_Battleaxe_Wood_Fence",
-
-                // Club
-                                                                    "Weapon_Club_Adamantite",
-                                                                    "Weapon_Club_Cobalt",
-                                                                    "Weapon_Club_Copper",
-                                                                    "Weapon_Club_Crude",
-                                                                    "Weapon_Club_Doomed",
-                                                                    "Weapon_Club_Iron_Rusty",
-                                                                    "Weapon_Club_Iron",
-                                                                    "Weapon_Club_Mithril",
-                                                                    "Weapon_Club_Onyxium",
-                                                                    "Weapon_Club_Scrap",
-                                                                    "Weapon_Club_Steel_Flail_Rusty",
-                                                                    "Weapon_Club_Stone_Trork",
-                                                                    "Weapon_Club_Thorium",
-                                                                    "Weapon_Club_Tribal",
-                                                                    "Weapon_Club_Zombie_Arm",
-                                                                    "Weapon_Club_Zombie_Burnt_Arm",
-                                                                    "Weapon_Club_Zombie_Burnt_Leg",
-                                                                    "Weapon_Club_Zombie_Frost_Arm",
-                                                                    "Weapon_Club_Zombie_Frost_Leg",
-                                                                    "Weapon_Club_Zombie_Leg",
-                                                                    "Weapon_Club_Zombie_Sand_Arm",
-                                                                    "Weapon_Club_Zombie_Sand_Leg",
-
-                // Crossbow
-                                                                    "Weapon_Crossbow_Ancient_Steel",
-                                                                    "Weapon_Crossbow_Iron",
-
-                // Daggers
-                                                                    "Weapon_Daggers_Adamantite_Saurian",
-                                                                    "Weapon_Daggers_Adamantite",
-                                                                    "Weapon_Daggers_Bone",
-                                                                    "Weapon_Daggers_Bronze_Ancient",
-                                                                    "Weapon_Daggers_Bronze",
-                                                                    "Weapon_Daggers_Claw_Bone",
-                                                                    "Weapon_Daggers_Cobalt",
-                                                                    "Weapon_Daggers_Copper",
-                                                                    "Weapon_Daggers_Crude",
-                                                                    "Weapon_Daggers_Doomed",
-                                                                    "Weapon_Daggers_Fang_Doomed",
-                                                                    "Weapon_Daggers_Iron",
-                                                                    "Weapon_Daggers_Mithril",
-                                                                    "Weapon_Daggers_Onyxium",
-                                                                    "Weapon_Daggers_Stone_Trork",
-                                                                    "Weapon_Daggers_Thorium",
-
-                // Longsword
-                                                                    "Weapon_Longsword_Adamantite_Saurian",
-                                                                    "Weapon_Longsword_Adamantite",
-                                                                    "Weapon_Longsword_Cobalt",
-                                                                    "Weapon_Longsword_Copper",
-                                                                    "Weapon_Longsword_Crude",
-                                                                    "Weapon_Longsword_Flame",
-                                                                    "Weapon_Longsword_Iron",
-                                                                    "Weapon_Longsword_Katana",
-                                                                    "Weapon_Longsword_Mithril",
-                                                                    "Weapon_Longsword_Onyxium",
-                                                                    "Weapon_Longsword_Praetorian",
-                                                                    "Weapon_Longsword_Scarab",
-                                                                    "Weapon_Longsword_Spectral",
-                                                                    "Weapon_Longsword_Stone_Trork",
-                                                                    "Weapon_Longsword_Thorium",
-                                                                    "Weapon_Longsword_Tribal",
-                                                                    "Weapon_Longsword_Void",
-
-                // Mace
-                                                                    "Weapon_Mace_Adamantite",
-                                                                    "Weapon_Mace_Cobalt",
-                                                                    "Weapon_Mace_Copper",
-                                                                    "Weapon_Mace_Crude",
-                                                                    "Weapon_Mace_Iron",
-                                                                    "Weapon_Mace_Mithril",
-                                                                    "Weapon_Mace_Onyxium",
-                                                                    "Weapon_Mace_Prisma",
-                                                                    "Weapon_Mace_Scrap",
-                                                                    "Weapon_Mace_Stone_Trork",
-                                                                    "Weapon_Mace_Thorium",
-
-                // Shield
-                                                                    "Weapon_Shield_Adamantite",
-                                                                    "Weapon_Shield_Cobalt",
-                                                                    "Weapon_Shield_Copper",
-                                                                    "Weapon_Shield_Doomed",
-                                                                    "Weapon_Shield_Iron",
-                                                                    "Weapon_Shield_Mithril",
-                                                                    "Weapon_Shield_Onyxium",
-                                                                    "Weapon_Shield_Orbis_Incandescent",
-                                                                    "Weapon_Shield_Orbis_Knight",
-                                                                    "Weapon_Shield_Praetorian",
-                                                                    "Weapon_Shield_Rusty",
-                                                                    "Weapon_Shield_Scrap_Spiked",
-                                                                    "Weapon_Shield_Scrap",
-                                                                    "Weapon_Shield_Thorium",
-                                                                    "Weapon_Shield_Wood",
-
-                // Shortbow
-                                                                    "Weapon_Shortbow_Adamantite",
-                                                                    "Weapon_Shortbow_Bomb",
-                                                                    "Weapon_Shortbow_Bronze",
-                                                                    "Weapon_Shortbow_Cobalt",
-                                                                    "Weapon_Shortbow_Combat",
-                                                                    "Weapon_Shortbow_Copper",
-                                                                    "Weapon_Shortbow_Crude",
-                                                                    "Weapon_Shortbow_Doomed",
-                                                                    "Weapon_Shortbow_Flame",
-                                                                    "Weapon_Shortbow_Frost",
-                                                                    "Weapon_Shortbow_Iron_Rusty",
-                                                                    "Weapon_Shortbow_Iron",
-                                                                    "Weapon_Shortbow_Mithril",
-                                                                    "Weapon_Shortbow_Onyxium",
-                                                                    "Weapon_Shortbow_Pull",
-                                                                    "Weapon_Shortbow_Ricochet",
-                                                                    "Weapon_Shortbow_Thorium",
-                                                                    "Weapon_Shortbow_Vampire",
-
-                // Spear
-                                                                    "Weapon_Spear_Adamantite_Saurian",
-                                                                    "Weapon_Spear_Adamantite",
-                                                                    "Weapon_Spear_Bone",
-                                                                    "Weapon_Spear_Bronze",
-                                                                    "Weapon_Spear_Cobalt",
-                                                                    "Weapon_Spear_Copper",
-                                                                    "Weapon_Spear_Crude",
-                                                                    "Weapon_Spear_Double_Incandescent",
-                                                                    "Weapon_Spear_Fishbone",
-                                                                    "Weapon_Spear_Iron",
-                                                                    "Weapon_Spear_Leaf",
-                                                                    "Weapon_Spear_Mithril",
-                                                                    "Weapon_Spear_Onyxium",
-                                                                    "Weapon_Spear_Scrap",
-                                                                    "Weapon_Spear_Stone_Trork",
-                                                                    "Weapon_Spear_Thorium",
-                                                                    "Weapon_Spear_Tribal",
-
-                // Staff
-                                                                    "Halloween_Broomstick",
-                                                                    "Weapon_Staff_Adamantite",
-                                                                    "Weapon_Staff_Bo_Bamboo",
-                                                                    "Weapon_Staff_Bo_Wood",
-                                                                    "Weapon_Staff_Bone",
-                                                                    "Weapon_Staff_Bronze",
-                                                                    "Weapon_Staff_Cane",
-                                                                    "Weapon_Staff_Cobalt",
-                                                                    "Weapon_Staff_Copper",
-                                                                    "Weapon_Staff_Crystal_Fire_Trork",
-                                                                    "Weapon_Staff_Crystal_Flame",
-                                                                    "Weapon_Staff_Crystal_Ice",
-                                                                    "Weapon_Staff_Crystal_Purple",
-                                                                    "Weapon_Staff_Crystal_Red",
-                                                                    "Weapon_Staff_Doomed",
-                                                                    "Weapon_Staff_Frost",
-                                                                    "Weapon_Staff_Iron",
-                                                                    "Weapon_Staff_Mithril",
-                                                                    "Weapon_Staff_Onion",
-                                                                    "Weapon_Staff_Onyxium",
-                                                                    "Weapon_Staff_Thorium",
-                                                                    "Weapon_Staff_Wizard",
-                                                                    "Weapon_Staff_Wood_Kweebec",
-                                                                    "Weapon_Staff_Wood_Rotten",
-                                                                    "Weapon_Staff_Wood",
-
-                // Sword
-                                                                    "Weapon_Sword_Adamantite",
-                                                                    "Weapon_Sword_Bone",
-                                                                    "Weapon_Sword_Bronze_Ancient",
-                                                                    "Weapon_Sword_Bronze",
-                                                                    "Weapon_Sword_Cobalt",
-                                                                    "Weapon_Sword_Copper",
-                                                                    "Weapon_Sword_Crude",
-                                                                    "Weapon_Sword_Cutlass",
-                                                                    "Weapon_Sword_Doomed",
-                                                                    "Weapon_Sword_Frost",
-                                                                    "Weapon_Sword_Iron",
-                                                                    "Weapon_Sword_Mithril",
-                                                                    "Weapon_Sword_Nexus",
-                                                                    "Weapon_Sword_Onyxium",
-                                                                    "Weapon_Sword_Runic",
-                                                                    "Weapon_Sword_Scrap",
-                                                                    "Weapon_Sword_Silversteel",
-                                                                    "Weapon_Sword_Steel_Incandescent",
-                                                                    "Weapon_Sword_Steel_Rusty",
-                                                                    "Weapon_Sword_Steel",
-                                                                    "Weapon_Sword_Stone_Trork",
-                                                                    "Weapon_Sword_Thorium",
-                                                                    "Weapon_Sword_Wood",
-
-                //Pickaxe
-                                                                    "Tool_Pickaxe_Adamantite",
-                                                                    "Tool_Pickaxe_Cobalt",
-                                                                    "Tool_Pickaxe_Copper",
-                                                                    "Tool_Pickaxe_Crude",
-                                                                    "Tool_Pickaxe_Iron",
-                                                                    "Tool_Pickaxe_Mithril",
-                                                                    "Tool_Pickaxe_Onyxium",
-                                                                    "Tool_Pickaxe_Scrap",
-                                                                    "Tool_Pickaxe_Thorium",
-                                                                    "Tool_Pickaxe_Wood",
-
-                //Bombs
-                                                                    "Weapon_Bomb",
-                                                                    "Weapon_Bomb_Stun",
-                                                                    "Weapon_Bomb_Potion_Poison",
-                                                                    "Weapon_Bomb_Continuous",
-
-                //Kunai
-                                                                    "Weapon_Kunai",
-
-                                                                    "Weapon_Gun_Blunderbuss",
-                                                                    "Weapon_Gun_Blunderbuss_Rusty",
-
-                                                                    "Weapon_Spellbook_Demon",
-                                                                    "Weapon_Spellbook_Fire",
-                                                                    "Weapon_Spellbook_Grimoire_Brown",
-                                                                    "Weapon_Spellbook_Grimoire_Purple",
-                                                                    "Weapon_Spellbook_Rekindle_Embers"
-        ));
-
-        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Armor material catalog (reference: folder names from the asset editor). Do not add '_Head'' here, I do this from code. Thanks.")
-        public List<String> armorMaterials = defaultArmorMaterials();
-
-        private static List<String> defaultArmorMaterials() {
-            return new ArrayList<>(List.of("Adamantite",
-                                           "Bronze",
-                                           "Bronze_Ornate",
-                                           "Cloth_Cindercloth",
-                                           "Cloth_Cotton",
-                                           "Cloth_Linen",
-                                           "Cloth_Silk",
-                                           "Cloth_Wool",
-                                           "Cobalt",
-                                           "Copper",
-                                           "Diving_Crude",
-                                           "Iron",
-                                           "Kweebec",
-                                           "Leather_Heavy",
-                                           "Leather_Light",
-                                           "Leather_Medium",
-                                           "Leather_Raven",
-                                           "Leather_Soft",
-                                           "Mithril",
-                                           "Onyxium",
-                                           "Prisma",
-                                           "Steel",
-                                           "Steel_Ancient",
-                                           "Thorium",
-                                           "Trork",
-                                           "Wood"
-            ));
-        }
-
-        @Default
-        @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Amount of armor pieces to equip per tier. 4 means 4 slots of armor equipped on that tier")
-        public int[] armorPiecesToEquipPerTier = {0, 1, 2, 3, 4};
-
-        @Default
-        @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Chance that something will be equipped in the utility-slot (shield, torch, ...) per tier.")
-        public double[] shieldUtilityChancePerTier = {0.0, 0.0, 0.20, 0.40, 0.60};
-
-        @Default
-        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Weapon ID's that contain these words will be marked as a two-handed weapon -> no shield equipable.")
-        public List<String> twoHandedWeaponIds = new ArrayList<>(List.of("shortbow",
-                                                                         "crossbow",
-                                                                         "spear",
-                                                                         "staff",
-                                                                         "battleaxe",
-                                                                         "longsword",
-                                                                         "bomb"
-        ));
     }
 
     public static final class AbilitiesConfig {

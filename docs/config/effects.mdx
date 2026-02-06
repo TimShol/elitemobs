@@ -1,0 +1,21 @@
+---
+title: Effects Configuration
+description: Configuring passive status effects in effects.yml.
+---
+
+`effects.yml` controls the passive buffs and visual particle effects applied to EliteMobs.
+
+## Projectile Resistance
+
+This effect gives Elites resistance against ranged attacks (bows, crossbows).
+
+```yaml
+EFFECT_PROJECTILE_RESISTANCE:
+  isEnabled: true
+  # Percentage of resistance per tier (0.0 to 1.0)
+  # Tier 4 gets 70% resistance, Tier 5 gets 85%
+  amountMultiplierPerTier: [0.0, 0.0, 0.0, 0.7, 0.85]
+  infinite: true
+```
+
+*   **Tip:** If you find the particle effects for this resistance visually overwhelming, you can set `isEnabled: false` to disable both the mechanics and the visuals.

@@ -59,10 +59,12 @@ Config files live under:
 ```
 
 Key files:
-- `main.yml` global systems, spawning, scaling
+- `core.yml` global systems, spawning, diagnostics
+- `stats.yml` health and damage multipliers
+- `gear.yml` equipment catalogs and restrictions
 - `mobs.yml` NPC rules and weapon overrides
 - `abilities.yml` abilities and gating
-- `drops.yml` loot rules
+- `loot.yml` loot rules
 - `visuals.yml` nameplates and scaling
 
 ## Runtime Reload

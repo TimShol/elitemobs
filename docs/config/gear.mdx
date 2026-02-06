@@ -1,0 +1,54 @@
+---
+title: Gear Configuration
+description: Managing equipment catalogs, durability, and restrictions in gear.yml.
+---
+
+`gear.yml` (formerly `catalogs.yml`) defines what items Elites can wear and how powerful those items are.
+
+## Durability
+
+Controls the condition of gear when it spawns (and potentially drops).
+
+```yaml
+Gear:
+  spawnGearDurabilityMin: 0.02 # 2% durability
+  spawnGearDurabilityMax: 0.30 # 30% durability
+```
+
+## Two-Handed Logic
+
+Prevents mobs from dual-wielding items that logically require two hands (like bows or heavy axes) with a shield.
+
+```yaml
+Gear:
+  twoHandedWeaponIds:
+    - "shortbow"
+    - "crossbow"
+    - "spear"
+    - "battleaxe"
+```
+
+## Catalogs & Rarity
+
+This section maps item keywords to rarities. For example, if a weapon ID contains "rusty", it is treated as "common".
+
+```yaml
+Gear:
+  # Maps keyword -> rarity
+  weaponRarityRulesContains:
+    "rusty": "common"
+    "void": "epic"
+    "flame": "legendary"
+
+  # Which tiers can wear which rarities
+  tierAllowedRarities:
+    - ["common"]              # Tier 1
+    - ["uncommon"]            # Tier 2
+    - ["rare"]                # Tier 3
+    - ["epic"]                # Tier 4
+    - ["epic", "legendary"]   # Tier 5
+```
+
+## Equipment Lists
+
+The `weaponCatalog` and `armorMaterials` lists are the "database" the mod draws from when equipping mobs. If you add modded items to Hytale, add their IDs here so Elites can use them.

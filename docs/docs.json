@@ -18,38 +18,29 @@
         "group": "Getting Started",
         "pages": [
           "index",
-          "EliteMobs_overview",
-          "EliteMobs_player_guide",
-          "EliteMobs_progression",
-          "EliteMobs_admin"
+          "general/mechanics"
         ]
       },
       {
         "group": "Configuration",
         "pages": [
-          "EliteMobs_configuration",
-          "EliteMobs_core_settings",
-          "EliteMobs_spawning",
-          "EliteMobs_mobs",
-          "EliteMobs_abilities",
-          "EliteMobs_effects",
-          "EliteMobs_drops",
-          "EliteMobs_catalogs",
-          "EliteMobs_consumables",
-          "EliteMobs_visuals"
+          "config/core",
+          "config/stats",
+          "config/gear",
+          "config/loot",
+          "config/visuals",
+          "config/abilities",
+          "config/mobs",
+          "config/effects",
+          "config/consumables"
         ]
       },
       {
-        "group": "Compatibility",
+        "group": "Reference",
         "pages": [
-          "EliteMobs_compatibility"
-        ]
-      },
-      {
-        "group": "Help",
-        "pages": [
-          "EliteMobs_commands",
-          "EliteMobs_faq"
+          "reference/commands",
+          "reference/compatibility",
+          "reference/faq"
         ]
       }
     ]

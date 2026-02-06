@@ -74,7 +74,6 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
     private long lastMinionCleanupTick = -1;
     private final Object minionRemovalLock = new Object();
     private final List<PendingMinionRemoval> pendingMinionRemovals = new ArrayList<>();
-    // Minion removals are scheduled to avoid touching the store from systems.
 
     private record PendingMinionRemoval(Ref<EntityStore> minionRef, UUID summonerId, long scheduledTick) {
     }
@@ -134,15 +133,14 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
             int maxTier = Math.max(minTier, minionComponent.maxTierIndex);
             int tierIndex = minTier + random.nextInt((maxTier - minTier) + 1);
 
-            boolean applied = applyTierFromCommand(config,
-                                                   npcRef,
-                                                   entityStore,
-                                                   commandBuffer,
-                                                   npcEntity,
-                                                   tierIndex,
-                                                   true
+            minionComponent.tierApplied = applyTierFromCommand(config,
+                                                               npcRef,
+                                                               entityStore,
+                                                               commandBuffer,
+                                                               npcEntity,
+                                                               tierIndex,
+                                                               true
             );
-            minionComponent.tierApplied = applied;
             commandBuffer.replaceComponent(npcRef, eliteMobsPlugin.getSummonedMinionComponent(), minionComponent);
             logNpcScanSummaryIfDue(config);
             return;
@@ -174,7 +172,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
 
         mobsMatchedCount++;
 
-        double[] spawnChances = resolveSpawnChancesForEnvironment(config, npcEntity);
+        double[] spawnChances = resolveSpawnChances(config, npcEntity);
         if (spawnChances == null) {
             logNpcScanSummaryIfDue(config);
             return;
@@ -187,6 +185,11 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
 
         EliteMobsTierComponent newTierComponent = new EliteMobsTierComponent();
         newTierComponent.tierIndex = tierIndex;
+
+        // Apply distance bonuses if enabled
+        if (config.spawning.progressionStyle == EliteMobsConfig.ProgressionStyle.DISTANCE_FROM_SPAWN) {
+            applyDistanceBonuses(config, npcEntity, newTierComponent);
+        }
 
         initializeAbilityStateIfNeeded(config, npcEntity, roleName, newTierComponent, tierIndex);
 
@@ -384,6 +387,68 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
         }
 
         return true;
+    }
+
+    private double[] resolveSpawnChances(EliteMobsConfig config, NPCEntity npcEntity) {
+        if (config.spawning.progressionStyle == EliteMobsConfig.ProgressionStyle.DISTANCE_FROM_SPAWN) {
+            return resolveSpawnChancesByDistance(config, npcEntity);
+        }
+        if (config.spawning.progressionStyle == EliteMobsConfig.ProgressionStyle.NONE) {
+            return config.spawning.spawnChancePerTier;
+        }
+        return resolveSpawnChancesForEnvironment(config, npcEntity);
+    }
+
+    private double[] resolveSpawnChancesByDistance(EliteMobsConfig config, NPCEntity npcEntity) {
+        double dist = getXZDistance(npcEntity);
+        double distPerTier = Math.max(1.0, config.spawning.distancePerTier);
+        
+        // simple floor: 0..distPerTier -> Tier 0, distPerTier..2*distPerTier -> Tier 1
+        int tier = (int) (dist / distPerTier);
+        tier = clampTierIndex(tier);
+
+        // Create a probability array where the calculated tier is guaranteed
+        double[] chances = new double[Constants.TIERS_AMOUNT];
+        chances[tier] = 1.0;
+        return chances;
+    }
+
+    private void applyDistanceBonuses(EliteMobsConfig config, NPCEntity npcEntity, EliteMobsTierComponent tierComponent) {
+        double dist = getXZDistance(npcEntity);
+        double interval = Math.max(1.0, config.spawning.distanceBonusInterval);
+        int intervals = (int) (dist / interval);
+
+        if (intervals <= 0) return;
+
+        float healthBonus = intervals * config.spawning.distanceHealthBonusPerInterval;
+        float damageBonus = intervals * config.spawning.distanceDamageBonusPerInterval;
+
+        // Cap bonuses relative to base potential
+        if (healthBonus > config.spawning.distanceHealthBonusCap) {
+            healthBonus = config.spawning.distanceHealthBonusCap;
+        }
+        if (damageBonus > config.spawning.distanceDamageBonusCap) {
+            damageBonus = config.spawning.distanceDamageBonusCap;
+        }
+
+        tierComponent.distanceHealthBonus = healthBonus;
+        tierComponent.distanceDamageBonus = damageBonus;
+    }
+
+    private double getXZDistance(NPCEntity npcEntity) {
+        if (npcEntity == null) return 0.0;
+        World world = npcEntity.getWorld();
+        // Assuming world spawn is 0,0 for now, or just distance from origin.
+        // Hytale worlds usually center on 0,0.
+        Ref<EntityStore> ref = npcEntity.getReference();
+        if (ref == null) return 0.0;
+        Store<EntityStore> store = ref.getStore();
+        if (store == null) return 0.0;
+        TransformComponent t = store.getComponent(ref, TRANSFORM_COMPONENT_TYPE);
+        if (t == null) return 0.0;
+        
+        Vector3d pos = t.getPosition();
+        return Math.sqrt(pos.getX() * pos.getX() + pos.getZ() * pos.getZ());
     }
 
     private double[] resolveSpawnChancesForEnvironment(EliteMobsConfig config, NPCEntity npcEntity) {
