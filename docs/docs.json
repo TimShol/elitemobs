@@ -3,10 +3,10 @@
   "name": "EliteMobs",
   "theme": "mint",
   "logo": {
-    "dark": "",
-    "light": ""
+    "dark": "/images/logo-dark.svg",
+    "light": "/images/logo-light.svg"
   },
-  "favicon": "",
+  "favicon": "/images/favicon.svg",
   "colors": {
     "primary": "#2a5e4e",
     "light": "#5bb399",
