@@ -27,23 +27,17 @@ Enable environment overrides and specify per-environment tier weights:
 Spawning:
   enableEnvironmentTierSpawns: true
   environmentTierSpawns:
+    default:
+      enabled: true
+      spawnChancePerTier: [0.46, 0.28, 0.16, 0.08, 0.04]
     Env_Zone1:
       enabled: true
-      spawnChancePerTier:
-        - 0.6
-        - 0.25
-        - 0.15
-        - 0.0
-        - 0.0
+      spawnChancePerTier: [0.6, 0.25, 0.15, 0.0, 0.0]
 ```
 
-If an environment is not listed, the base `spawnChancePerTier` applies.
+- If an environment is not listed, base `spawnChancePerTier` applies.
+- If `enabled: false`, elites never spawn in that environment.
 
 ## Reconcile Window
 
-After a config reload, existing elites can be reconciled within a window of ticks:
-
-```yaml
-Reconcile:
-  reconcileWindowTicks: 40
-```
+After a config reload, existing elites can be reconciled within a window of ticks. See [Core Settings](/EliteMobs_core_settings).

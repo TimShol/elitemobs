@@ -13,12 +13,7 @@ Catalogs are defined in `catalogs.yml` under `Gear`.
 
 ```yaml
 Gear:
-  armorPiecesToEquipPerTier:
-    - 0
-    - 1
-    - 2
-    - 3
-    - 4
+  armorPiecesToEquipPerTier: [0, 1, 2, 3, 4]
 ```
 
 ## Weapon Catalog
@@ -50,4 +45,12 @@ Gear:
     - ["epic", "legendary"]
 ```
 
-These rules define which rarities are allowed for each tier and how likely each is to appear.
+## Utility Slot And Two-Handed Weapons
+
+```yaml
+Gear:
+  shieldUtilityChancePerTier: [0.0, 0.0, 0.2, 0.4, 0.6]
+  twoHandedWeaponIds: ["shortbow", "crossbow", "spear", "staff", "battleaxe", "longsword", "bomb"]
+```
+
+Two-handed weapon ids prevent shield equips.

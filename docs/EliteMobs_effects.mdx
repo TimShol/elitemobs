@@ -7,19 +7,19 @@ description: Configure tier-based elite effects.
 
 Effects are defined in `effects.yml` under `byId`.
 
+## Common Fields
+
+- `isEnabled` toggle
+- `isEnabledPerTier` per-tier toggles
+- `amountMultiplierPerTier` for effect strength
+- `templates` for effect asset templates
+
 ## Example: Projectile Resistance
 
 ```yaml
 byId:
   projectile_resistance:
-    amountMultiplierPerTier:
-      - 0.0
-      - 0.0
-      - 0.0
-      - 0.7
-      - 0.85
-    infinite: true
+    amountMultiplierPerTier: [0.0, 0.0, 0.0, 0.7, 0.85]
+    isEnabled: true
     isEnabledPerTier: [false, false, false, true, true]
 ```
-
-Effects reference templates in `Server/Entity/Effects/EliteMobs`.

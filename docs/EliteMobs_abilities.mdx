@@ -11,35 +11,54 @@ Abilities are defined in `abilities.yml` under `byId`.
 
 - `gate` rules based on NPC role or weapon
 - `minRange` and `maxRange` for activation
-- `chancePerTier` for per-tier activation chances
+- `chancePerTier` for per-tier activation chances (rolled once on spawn)
 - `cooldownSecondsPerTier` for per-tier cooldowns
 - `isEnabledPerTier` to toggle specific tiers
 
-## Example: Charge Leap
+## Ability Gates
+
+Ability gates can filter by:
+- `roleMustContain` / `roleMustNotContain`
+- `weaponIdMustContain` / `weaponIdMustNotContain`
+- `rules` for layered allow/deny logic
+
+## Charge Leap
+
+Charge leap is a tiered leap that slams and deals damage on impact.
+
+Key fields:
+- `slamRangePerTier`
+- `slamBaseDamagePerTier`
+- `applyForcePerTier`
+- `knockbackLiftPerTier`, `knockbackPushAwayPerTier`, `knockbackForcePerTier`
+
+## Heal Potion
+
+Heals trigger when health falls between configured thresholds.
+
+Key fields:
+- `minHealthTriggerPercent` and `maxHealthTriggerPercent`
+- `instantHealChance` and `instantHealAmountPerTier`
+- `npcDrinkDurationSeconds` and `npcDrinkItemId`
+
+## Undead Summon
+
+Summons undead minions using weighted pools.
+
+Key fields:
+- `roleIdentifiers` to select the summon archetype
+- `maxAlive` to limit active minions per summoner
+- `skeletonArcherWeight`, `zombieWeight`, `wraithWeight`
+- `spawnMarkerEntries` for advanced explicit spawn markers
+
+### Advanced Spawn Marker Entry
 
 ```yaml
-byId:
-  charge_leap:
-    gate:
-      roleMustNotContain: ["Eye_Void", "Crawler_Void", "Skeleton_Burnt_Praetorian"]
-      weaponIdMustNotContain: ["shortbow", "crossbow", "staff", "pickaxe", "bomb", "kunai", "blunderbuss", "spellbook"]
-    minRange: 9.0
-    maxRange: 30.0
-    chancePerTier: [1.0, 1.0, 1.0, 1.0, 1.0]
-    cooldownSecondsPerTier: [0.0, 0.0, 0.0, 16.0, 20.0]
+spawnMarkerEntries:
+  - Name: "Skeleton_Archer"
+    Weight: 100
+    Flock: "EliteMobs_Summon_3_7"
+    SpawnAfterGameTime: "PT0S"
 ```
 
-## Example: Heal Potion
-
-```yaml
-byId:
-  heal_potion:
-    minHealthTriggerPercent: 0.5
-    maxHealthTriggerPercent: 0.5
-    npcDrinkItemId: "Potion_Health_Greater"
-    chancePerTier: [0.0, 0.0, 0.0, 1.0, 1.0]
-```
-
-## Templates
-
-Abilities reference interaction templates in `Server/Item/Interactions` and `Server/Item/RootInteractions`. These are generated assets and usually do not require manual edits.
+`SpawnAfterGameTime` uses ISO-8601 duration format (e.g. `PT1S`).

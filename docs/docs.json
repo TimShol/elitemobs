@@ -1,16 +1,16 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "EliteMobs",
-  "theme": "mint",
+  "theme": "willow",
   "logo": {
     "dark": "/images/logo-dark.svg",
     "light": "/images/logo-light.svg"
   },
   "favicon": "/images/favicon.svg",
   "colors": {
-    "primary": "#2a5e4e",
-    "light": "#5bb399",
-    "dark": "#1b3d33"
+    "primary": "#23342C",
+    "light": "#C9A86A",
+    "dark": "#0E1511"
   },
   "navigation": {
     "groups": [
@@ -18,14 +18,17 @@
         "group": "Getting Started",
         "pages": [
           "index",
-          "EliteMobs_intro",
-          "EliteMobs_overview"
+          "EliteMobs_overview",
+          "EliteMobs_player_guide",
+          "EliteMobs_progression",
+          "EliteMobs_admin"
         ]
       },
       {
         "group": "Configuration",
         "pages": [
           "EliteMobs_configuration",
+          "EliteMobs_core_settings",
           "EliteMobs_spawning",
           "EliteMobs_mobs",
           "EliteMobs_abilities",
@@ -37,8 +40,15 @@
         ]
       },
       {
+        "group": "Compatibility",
+        "pages": [
+          "EliteMobs_compatibility"
+        ]
+      },
+      {
         "group": "Help",
         "pages": [
+          "EliteMobs_commands",
           "EliteMobs_faq"
         ]
       }

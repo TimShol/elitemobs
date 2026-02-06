@@ -1,6 +1,6 @@
 ---
 title: Drops
-description: Configure elite loot, extra drops, and tier ranges.
+description: Configure elite loot, vanilla multipliers, and extra drops.
 ---
 
 # Drops
@@ -15,6 +15,17 @@ Loot:
   dropOffhandItemChance: 0.05
   dropWeaponChance: 0.05
 ```
+
+These chances control the drop of equipped items.
+
+## Vanilla Drop Multipliers
+
+```yaml
+Loot:
+  vanillaDroplistMultiplierPerTier: [0, 0, 2, 4, 6]
+```
+
+This multiplies vanilla resource drops by tier.
 
 ## Extra Drops
 

@@ -1,0 +1,88 @@
+---
+title: Core Settings (main.yml)
+description: Global settings for spawning, scaling, reconcile, debug, gear durability, and asset generation.
+---
+
+# Core Settings (main.yml)
+
+`main.yml` contains global systems used by EliteMobs. These settings affect how elites spawn, scale, and reconcile after reloads.
+
+## System
+
+```yaml
+System:
+  configVersion: "1.1.0"
+```
+
+This is auto-managed. You should not edit it.
+
+## Reconcile
+
+Reconcile updates existing elites after a config reload.
+
+```yaml
+Reconcile:
+  announceReconcile: true
+  reconcileWindowTicks: 40
+```
+
+- `reconcileWindowTicks`: ticks to re-apply features to existing elites after reload. `0` disables.
+- `announceReconcile`: logs when reconcile starts and ends.
+
+## Debug
+
+```yaml
+Debug:
+  isDebugModeEnabled: true
+  debugMobRuleScanIntervalSeconds: 5
+```
+
+- Enables extra logs for spawn scans and ability decisions.
+- The scan interval controls how often NPCs are evaluated against mob rules.
+
+## Spawning
+
+See [Spawning](/EliteMobs_spawning) for full details.
+
+## Health & Damage Scaling
+
+```yaml
+Health:
+  enableHealthScaling: true
+  healthMultiplierPerTier: [0.1, 0.5, 1.1, 1.8, 2.6]
+
+Damage:
+  enableMobDamageMultiplier: true
+  mobDamageMultiplierPerTier: [0.6, 1.1, 1.6, 2.1, 2.6]
+  mobDamageRandomVariance: 0.05
+```
+
+- `mobDamageRandomVariance` adds a random variance to the damage multiplier.
+
+## Compatibility Messages
+
+```yaml
+Compat:
+  showCompatJoinMessages: true
+```
+
+Shows compatibility messages when players join.
+
+## Gear Durability
+
+```yaml
+Gear:
+  spawnGearDurabilityMin: 0.02
+  spawnGearDurabilityMax: 0.30
+```
+
+Newly spawned elite gear rolls durability between these fractions of max durability.
+
+## Asset Generator
+
+```yaml
+AssetGenerator:
+  tierSuffixes: ["Tier_1", "Tier_2", "Tier_3", "Tier_4", "Tier_5"]
+```
+
+Tier suffixes control how tiered assets are generated under `Server/`.

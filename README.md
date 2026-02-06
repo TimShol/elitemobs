@@ -2,7 +2,7 @@
 
 ## Tiered elites that change combat, loot, and progression
 
-EliteMobs transforms standard NPCs into tiered elites with stronger stats, distinct visuals, and improved rewards. It is configurable, supports runtime reloads, and is built for both casual and hardcore servers.
+EliteMobs was built to transform standard NPCs into tiered elites with stronger stats, distinct visuals, and improved rewards. It is configurable, supports runtime reloads, and is built for both casual and hardcore servers.
 
 ## Feature Highlights
 
@@ -36,7 +36,7 @@ EliteMobs transforms standard NPCs into tiered elites with stronger stats, disti
 
 [![CurseForge](https://img.shields.io/badge/CurseForge-EliteMobs-F16436?style=for-the-badge&logo=curseforge&logoColor=white)](https://www.curseforge.com/hytale/mods/elitemobs)
 
-Compatibility Mods (expandable list):
+Compatibility Mods:
 - [EliteMobs RPG Leveling Compatibility](https://www.curseforge.com/hytale/mods/elitemobs-rpgleveling-compat)
 
 ## Documentation
@@ -84,7 +84,7 @@ Repeat until all remaining elite NPCs are removed.
 
 ## Compatibility
 
-Elitemobs is designed to work with other mods. If you use RPG Leveling, install the compatibility mod for proper nameplate and tier integration.
+EliteMobs is designed to work with other mods. If RPG Leveling is used, install the compatibility mod for proper nameplate and tier integration.
 
 ## License
 

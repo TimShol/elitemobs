@@ -5,26 +5,28 @@ description: A complete map of all EliteMobs YAML files.
 
 # Configuration Map
 
-EliteMobs uses a small set of YAML files. Defaults are in code, and YAML overrides are applied on boot. Missing keys are re-added automatically.
+EliteMobs is configured through a small set of YAML files. Defaults are in code and YAML overrides are applied on boot. Missing keys are re-added automatically.
 
 ## Core Files
 
-- `main.yml` global systems, spawning, scaling, compatibility, and gear durability
+- `main.yml` global systems, spawning, scaling, compatibility, gear durability, and asset generation
 - `mobs.yml` NPC matching rules and weapon override rules
 - `abilities.yml` abilities, gates, and per-tier tuning
 - `effects.yml` status effects and per-tier enables
-- `drops.yml` base drop chances and extra drop tables
+- `drops.yml` base drop chances, vanilla drop multipliers, and extra drop tables
 - `catalogs.yml` weapon and armor catalogs plus rarity rules
 - `consumables.yml` consumable use times and movement slowdown
 - `visuals.yml` model scaling and nameplate rules
+
+## Where To Start
+
+- For difficulty: `main.yml` (health, damage, tier chances)
+- For identity: `visuals.yml` (nameplates, scaling)
+- For rewards: `drops.yml` and `catalogs.yml`
+- For behavior: `abilities.yml` and `mobs.yml`
 
 ## Conventions
 
 - Arrays with 5 values map to Tier 1 through Tier 5.
 - Per-environment overrides are supported in `main.yml`.
 - Most sections include `enabled` or `isEnabled` toggles.
-
-## Safe Editing
-
-- Avoid deleting sections. Remove or toggle specific values instead.
-- Keep backups or use git for version control.

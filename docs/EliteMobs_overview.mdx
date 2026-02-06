@@ -1,15 +1,22 @@
 ---
 title: Overview
-description: Tier system, scaling, and the overall gameplay loop.
+description: What EliteMobs changes and how the tier system works.
 ---
 
 # Overview
 
-EliteMobs introduces a tier system that determines how strong an elite is and how often it appears. Higher tiers are rarer, stronger, and more rewarding.
+EliteMobs was built to introduce elite variants of standard NPCs. Elites are organized into tiers that determine how strong they are, how they look, and what they drop. Higher tiers are rarer and more dangerous.
+
+## Feature Categories
+
+- **Combat**: tiered health and damage scaling, ability mechanics, and clearer damage numbers.
+- **Loot & Gear**: tiered gear equips, rarity rules, and extra drop tables.
+- **Visual Identity**: nameplates, tier prefixes, and optional model scaling.
+- **Systems**: runtime reloads, asset generation, and environment-based spawn rules.
 
 ## Tier Distribution
 
-Global tier spawn chances are defined in `main.yml`:
+Global tier chances are defined in `main.yml`:
 
 ```yaml
 Spawning:
@@ -21,34 +28,21 @@ Spawning:
     - 0.04
 ```
 
-You can override these per environment to create high-tier zones.
-
 ## Scaling
 
-Health and damage are scaled per tier in `main.yml`:
+Health and damage scaling are defined in `main.yml`:
 
 ```yaml
 Health:
-  healthMultiplierPerTier:
-    - 0.1
-    - 0.5
-    - 1.1
-    - 1.8
-    - 2.6
+  enableHealthScaling: true
+  healthMultiplierPerTier: [0.1, 0.5, 1.1, 1.8, 2.6]
 
 Damage:
-  mobDamageMultiplierPerTier:
-    - 0.6
-    - 1.1
-    - 1.6
-    - 2.1
-    - 2.6
+  enableMobDamageMultiplier: true
+  mobDamageMultiplierPerTier: [0.6, 1.1, 1.6, 2.1, 2.6]
+  mobDamageRandomVariance: 0.05
 ```
 
 ## Visual Identity
 
-Elites use tiered nameplate prefixes and optional model scaling. The defaults are configured in `visuals.yml`.
-
-## Loot And Gear
-
-Elites can equip gear and drop rarer items. Gear catalogs and rarity rules are defined in `catalogs.yml`. Loot rules are in `drops.yml`.
+Nameplates and tier prefixes are configured in `visuals.yml`, and model scaling can be enabled to make elites feel physically imposing.
