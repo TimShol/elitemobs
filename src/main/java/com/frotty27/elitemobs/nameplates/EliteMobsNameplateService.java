@@ -1,14 +1,14 @@
 package com.frotty27.elitemobs.nameplates;
 
 import com.frotty27.elitemobs.config.EliteMobsConfig;
-import com.frotty27.elitemobs.logs.EliteMobsLogLevel;
-import com.frotty27.elitemobs.logs.EliteMobsLogger;
+import com.frotty27.nameplatebuilder.api.NameplateAPI;
+import com.frotty27.nameplatebuilder.api.NameplateData;
+import com.frotty27.nameplatebuilder.api.SegmentTarget;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
+import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.List;
@@ -17,6 +17,16 @@ import java.util.Map;
 
 import static com.frotty27.elitemobs.utils.ClampingHelpers.clampTierIndex;
 
+/**
+ * Manages elite mob nameplate text via the NameplateBuilder API.
+ *
+ * <p>Registers three segments that players can independently toggle/reorder:</p>
+ * <ul>
+ *   <li><b>elite-prefix</b> — Per-tier nameplate prefix (e.g. config-driven label)</li>
+ *   <li><b>elite-tier</b> — Tier stars / family-based tier indicator (e.g. "* * * * *")</li>
+ *   <li><b>elite-name</b> — The mob's display name derived from its role</li>
+ * </ul>
+ */
 public final class EliteMobsNameplateService {
 
     private static final String DEFAULT_MPC_NAME = "NPC";
@@ -38,15 +48,31 @@ public final class EliteMobsNameplateService {
             "void"
     );
 
-    private static ComponentType<EntityStore, Nameplate> cachedNameplateComponentType;
+    // ── Segment IDs and display names ──
 
-    private static ComponentType<EntityStore, Nameplate> getNameplateComponentType() {
-        // Lazy: during early bootstrap this may be null; later it becomes non-null.
-        if (cachedNameplateComponentType == null) {
-            cachedNameplateComponentType = Nameplate.getComponentType();
-        }
-        return cachedNameplateComponentType;
+    public static final String SEGMENT_PREFIX = "elite-tier-prefix";
+    public static final String SEGMENT_TIER = "elite-tier";
+    public static final String SEGMENT_NAME = "elite-npc-type";
+
+    public static final String DISPLAY_PREFIX = "Elite Tier Prefix";
+    public static final String DISPLAY_TIER = "Elite Tier";
+    public static final String DISPLAY_NAME = "Elite Type";
+
+    public static final String EXAMPLE_PREFIX = "\u2022 \u2022 \u2022";
+    public static final String EXAMPLE_TIER = "Common, ...";
+    public static final String EXAMPLE_NAME = "Zombie, ...";
+
+    /**
+     * Describes all EliteMobs nameplate segments in the NameplateBuilder UI.
+     * Called once during plugin setup.
+     */
+    public void describeSegments(JavaPlugin plugin) {
+        NameplateAPI.describe(plugin, SEGMENT_PREFIX, DISPLAY_PREFIX, SegmentTarget.NPCS, EXAMPLE_PREFIX);
+        NameplateAPI.describe(plugin, SEGMENT_TIER, DISPLAY_TIER, SegmentTarget.NPCS, EXAMPLE_TIER);
+        NameplateAPI.describe(plugin, SEGMENT_NAME, DISPLAY_NAME, SegmentTarget.NPCS, EXAMPLE_NAME);
     }
+
+    // ── Apply / update ──
 
     public void applyOrUpdateNameplate(EliteMobsConfig config, Ref<EntityStore> entityRef, Store<EntityStore> entityStore,
                                        CommandBuffer<EntityStore> commandBuffer, String roleName, int tierIndex) {
@@ -55,52 +81,78 @@ public final class EliteMobsNameplateService {
 
         int clampedTierIndex = clampTierIndex(tierIndex);
 
-        // If Nameplate component isn't registered yet, do nothing this tick.
-        ComponentType<EntityStore, Nameplate> nameplateComponentType = getNameplateComponentType();
-        if (nameplateComponentType == null) return;
-
         boolean enabled = config.nameplatesConfig.nameplatesEnabled
-                && areNameplatesEnabledForTier(config, clampedTierIndex) 
+                && areNameplatesEnabledForTier(config, clampedTierIndex)
                 && passesRoleFilters(config, roleName);
 
-        Nameplate existing = entityStore.getComponent(entityRef, nameplateComponentType);
-
         if (!enabled) {
-            if (existing != null) {
-                if (config.debugConfig != null && config.debugConfig.isDebugModeEnabled) {
-                    EliteMobsLogger.debug(
-                            HytaleLogger.forEnclosingClass(),
-                            "[Nameplate] remove: global=%s perTier=%s filtered=%s tier=%d role=%s",
-                            EliteMobsLogLevel.INFO,
-                            String.valueOf(config.nameplatesConfig.nameplatesEnabled),
-                            String.valueOf(areNameplatesEnabledForTier(config, clampedTierIndex)),
-                            String.valueOf(passesRoleFilters(config, roleName)),
-                            clampedTierIndex,
-                            String.valueOf(roleName)
-                    );
-                }
-                commandBuffer.removeComponent(entityRef, nameplateComponentType);
-            }
+            removeAllSegments(entityStore, entityRef);
             return;
         }
 
-        String fullNameplateText = buildNameplateText(config, roleName, clampedTierIndex);
+        // Resolve the three separate text parts
+        String prefixText = getNameplatePrefixForTier(config, clampedTierIndex);
+        String tierText = resolveTierPrefixForRole(config, roleName, clampedTierIndex);
+        String nameText = resolveNameText(config, roleName);
 
-        if (fullNameplateText.isBlank()) {
-            if (existing != null) commandBuffer.removeComponent(entityRef, nameplateComponentType);
+        if (prefixText.isBlank() && tierText.isBlank() && nameText.isBlank()) {
+            removeAllSegments(entityStore, entityRef);
             return;
         }
 
-        if (existing != null) {
-            if (fullNameplateText.equals(existing.getText())) return;
-            existing.setText(fullNameplateText);
-            commandBuffer.replaceComponent(entityRef, nameplateComponentType, existing);
-            return;
+        // Get or create the NameplateData component
+        ComponentType<EntityStore, NameplateData> type = NameplateAPI.getComponentType();
+        NameplateData data = entityStore.getComponent(entityRef, type);
+        boolean isNew = data == null;
+        if (isNew) {
+            data = new NameplateData();
         }
 
-        commandBuffer.putComponent(entityRef, nameplateComponentType, new Nameplate(fullNameplateText));
+        // Set or remove each segment based on whether it has text
+        setOrRemove(data, SEGMENT_PREFIX, prefixText);
+        setOrRemove(data, SEGMENT_TIER, tierText);
+        setOrRemove(data, SEGMENT_NAME, nameText);
+
+        if (isNew) {
+            // putComponent is an upsert — safe even if another system added the
+            // component between our read and the command buffer executing.
+            commandBuffer.putComponent(entityRef, type, data);
+        }
     }
 
+    private static void setOrRemove(NameplateData data, String segmentId, String text) {
+        if (text.isBlank()) {
+            data.removeText(segmentId);
+        } else {
+            data.setText(segmentId, text);
+        }
+    }
+
+    private static void removeAllSegments(Store<EntityStore> entityStore, Ref<EntityStore> entityRef) {
+        ComponentType<EntityStore, NameplateData> type = NameplateAPI.getComponentType();
+        NameplateData data = entityStore.getComponent(entityRef, type);
+        if (data != null) {
+            data.removeText(SEGMENT_PREFIX);
+            data.removeText(SEGMENT_TIER);
+            data.removeText(SEGMENT_NAME);
+        }
+    }
+
+    // ── Name resolution ──
+
+    private static String resolveNameText(EliteMobsConfig config, String roleName) {
+        EliteMobsConfig.NameplateMode nameplateMode =
+                (config.nameplatesConfig.nameplateMode != null) ? config.nameplatesConfig.nameplateMode : EliteMobsConfig.NameplateMode.RANKED_ROLE;
+
+        return switch (nameplateMode) {
+            case SIMPLE -> resolveRoleWithoutFamily(roleName);
+            case RANKED_ROLE -> resolveDisplayRoleName(roleName);
+        };
+    }
+
+    /**
+     * Builds the full combined nameplate text (used by fallback / debug / tests).
+     */
     public String buildNameplateText(EliteMobsConfig config, String roleName, int clampedTierIndex) {
         if (config == null || !config.nameplatesConfig.nameplatesEnabled) return "";
         if (!passesRoleFilters(config, roleName)) return "";
@@ -122,7 +174,6 @@ public final class EliteMobsNameplateService {
 
         return joinNonBlank(nameplatePrefix, nameplateBody);
     }
-
 
     // ------------------------------------------------------------
     // Tier gating helpers
@@ -147,7 +198,6 @@ public final class EliteMobsNameplateService {
     private static boolean passesRoleFilters(EliteMobsConfig config, String roleName) {
         String roleNameLowercase = (roleName == null) ? "" : roleName.toLowerCase(Locale.ROOT);
 
-        // Deny first
         List<String> denyList = config.nameplatesConfig.nameplateMustNotContainRoles;
         if (denyList != null) {
             for (String forbiddenFragment : denyList) {
@@ -156,14 +206,12 @@ public final class EliteMobsNameplateService {
             }
         }
 
-        // Allow any-of. If no allow rules => allow all.
         List<String> allowList = config.nameplatesConfig.nameplateMustContainRoles;
         if (allowList == null || allowList.isEmpty()) return true;
 
         boolean hasAnyAllowRule = false;
         for (String requiredFragment : allowList) {
             if (requiredFragment == null || requiredFragment.isBlank()) continue;
-
             hasAnyAllowRule = true;
             if (roleNameLowercase.contains(requiredFragment.toLowerCase(Locale.ROOT))) return true;
         }
@@ -189,8 +237,6 @@ public final class EliteMobsNameplateService {
         return leftText + " " + rightText;
     }
 
- 
-
     // ------------------------------------------------------------
     // Name resolution (family, role, tier prefix)
     // ------------------------------------------------------------
@@ -207,7 +253,6 @@ public final class EliteMobsNameplateService {
 
         return prettifyString(joinSegments(segments, 1, segments.length));
     }
-
 
     private static String resolveDisplayRoleName(String roleName) {
         if (roleName == null || roleName.isBlank()) return DEFAULT_MPC_NAME;
@@ -230,7 +275,6 @@ public final class EliteMobsNameplateService {
             if (segments.length >= 2 && startInclusive == 2 && isVariantSegment(segments[1])) {
                 return prettifyString(segments[0]);
             }
-
             return prettifyString(joinSegments(segments, 0, endExclusive));
         }
 
@@ -239,16 +283,12 @@ public final class EliteMobsNameplateService {
 
     private static boolean isNoiseSegment(String segment) {
         if (segment == null) return true;
-
-        String segmentLowercase = segment.toLowerCase(Locale.ROOT);
-        return NOISE_SEGMENTS.contains(segmentLowercase);
+        return NOISE_SEGMENTS.contains(segment.toLowerCase(Locale.ROOT));
     }
 
     private static boolean isVariantSegment(String segment) {
         if (segment == null) return false;
-
-        String segmentLowercase = segment.toLowerCase(Locale.ROOT);
-        return VARIANT_SEGMENTS.contains(segmentLowercase);
+        return VARIANT_SEGMENTS.contains(segment.toLowerCase(Locale.ROOT));
     }
 
     private static String joinSegments(String[] segments, int startInclusive, int endExclusive) {
@@ -298,7 +338,7 @@ public final class EliteMobsNameplateService {
         return safe(tierPrefixes.get(clampedTierIndex));
     }
 
-    private static String classifyFamily(String roleName) {
+    static String classifyFamily(String roleName) {
         if (roleName == null) return DEFAULT_FAMILY_KEY;
         String roleNameLowercase = roleName.toLowerCase(Locale.ROOT);
 

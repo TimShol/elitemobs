@@ -74,6 +74,8 @@ public final class EliteMobsPlugin extends JavaPlugin {
         getEventRegistry().register(LoadAssetEvent.class, this::onLoadAssets);
         getEventRegistry().register(PlayerConnectEvent.class, this::onPlayerConnect);
 
+        nameplateService.describeSegments(this);
+
         registerComponents();
         registerSystems();
         registerCommands();
