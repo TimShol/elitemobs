@@ -10,7 +10,9 @@
   ],
   "Website": "${website}",
   "ServerVersion": "${server_version}",
-  "Dependencies": {},
+  "Dependencies": {
+    "Frotty27:NameplateBuilder": "*"
+  },
   "OptionalDependencies": {},
   "DisabledByDefault": false,
   "Main": "${entry_point}",
